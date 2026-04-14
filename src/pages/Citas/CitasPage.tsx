@@ -9,6 +9,7 @@ import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import { useCitas, useCreateCita, useUpdateEstadoCita } from '@/hooks/useCitas';
 import { useHorarios } from '@/hooks/useHorarios';
+import { usePacientes } from '@/hooks/usePacientes';
 import type { Cita, EstadoCita } from '@/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -51,6 +52,7 @@ export default function CitasPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const { data: citas, isLoading } = useCitas();
   const { data: horarios } = useHorarios();
+  const { data: pacientesData } = usePacientes({ page: 1, per_page: 1000 });
   const createMutation = useCreateCita();
   const updateEstadoMutation = useUpdateEstadoCita();
 
@@ -287,10 +289,13 @@ export default function CitasPage() {
               }))}
               {...register('horario_id')}
             />
-            <Input
-              label="ID del Paciente (UUID)"
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            <Select
+              label="Paciente"
               error={errors.paciente_id?.message}
+              options={(pacientesData?.items ?? []).map((p) => ({
+                value: p.id,
+                label: `${p.nombres} ${p.apellido_paterno} ${p.apellido_materno || ''} - ${p.numero_control}`,
+              }))}
               {...register('paciente_id')}
             />
             <Textarea

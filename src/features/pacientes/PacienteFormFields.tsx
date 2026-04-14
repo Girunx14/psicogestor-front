@@ -21,7 +21,7 @@ const pacienteSchema = z.object({
   con_quien_vive: z.string().min(1, 'Este campo es requerido'),
   nombre_padre: z.string(),
   nombre_madre: z.string(),
-  padres_separados: z.coerce.boolean(),
+  padres_separados: z.union([z.boolean(), z.string()]).transform((v) => v === 'true' || v === true),
 });
 
 type PacienteSchemaType = z.infer<typeof pacienteSchema>;
