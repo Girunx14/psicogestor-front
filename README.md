@@ -1,73 +1,60 @@
-# React + TypeScript + Vite
+# Gestor Psicólogo - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Esta es la aplicación web (frontend) para el sistema de gestión de consultas y pacientes de psicología.
 
-Currently, two official plugins are available:
+## Tecnologías que usamos
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Empezamos este proyecto con [Vite](https://vitejs.dev/) y nos armamos de un buen stack moderno para que el proyecto vuele:
 
-## React Compiler
+- **Framework principal:** [React 19](https://react.dev/)
+- **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
+- **Estilos:** [Tailwind CSS](https://tailwindcss.com/)
+- **Rutas:** [React Router v7](https://reactrouter.com/)
+- **Estado Global:** [Zustand](https://zustand-demo.pmnd.rs/)
+- **Datos y Caché:** [TanStack React Query](https://tanstack.com/query/latest)
+- **Formularios:** [React Hook Form](https://react-hook-form.com/) junto con [Zod](https://zod.dev/) para validar
+- **Gráficos:** [Recharts](https://recharts.org/)
+- **Iconos:** [Lucide React](https://lucide.dev/)
+- **Peticiones HTTP:** [Axios](https://axios-http.com/)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Lo que necesitas para echarlo a andar
 
-## Expanding the ESLint configuration
+Antes de meter las manos, asegúrate de tener instalado en tu compu:
+- [Node.js](https://nodejs.org/) (recomendable la versión 18 en adelante)
+- Tu gestor de paquetes favorito (usualmente ya viene con `npm`)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Así lo configuras rápidamente
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1. Asegúrate de estar parado dentro de la carpeta del proyecto (`gestor-psicologo-front`).
+2. Dale una pasada con npm para descargar todo lo necesario:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+3. Revisa o crea el archivo `.env` en la raíz. Ahí es donde le decimos al frontend en dónde buscar a tu API (backend):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_URL=http://localhost:8000
 ```
+*(Si tu backend vive en otro puerto o dirección, nomás cámbiasela ahí).*
+
+## Para correrlo y ver los cambios en vivo
+
+Para levantar todo el entorno local y programar a gusto:
+
+```bash
+npm run dev
+```
+
+La consola te soltará una dirección (normalmente algo como `http://localhost:5173`). Ábrela en el navegador y con eso ya estarás viendo la app. Cualquier cosa que modifiques en el código se actualizará sola frente a ti.
+
+## Para construir la versión final (Producción)
+
+Cuando ya tengas todo listo y lo quieras subir a algún dominio, corre:
+
+```bash
+npm run build
+```
+
+Esto va a agarrar todo el código, lo comprimirá y te dejará lista una carpeta `dist`. Esos archivitos son los que subes al servidor de tu preferencia (como Vercel, Netlify o tu propio host).
