@@ -2,118 +2,107 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #EEF2F8;
+    color: #000000;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  #root {
+    min-height: 100vh;
+  }
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #C2C1C3;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #807E82;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-medium rounded-lg px-4 py-2.5 
+           hover:bg-primary-600 active:bg-primary-700 
+           transition-colors duration-150 
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+  .btn-secondary {
+    @apply bg-secondary-100 text-secondary-800 font-medium rounded-lg px-4 py-2.5 
+           hover:bg-secondary-200 active:bg-secondary-300 
+           transition-colors duration-150 
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
-}
 
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
+  .btn-outline {
+    @apply border border-primary text-primary font-medium rounded-lg px-4 py-2.5 
+           hover:bg-primary-50 active:bg-primary-100 
+           transition-colors duration-150 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-body {
-  margin: 0;
-}
+  .btn-danger {
+    @apply bg-red-600 text-white font-medium rounded-lg px-4 py-2.5 
+           hover:bg-red-700 active:bg-red-800 
+           transition-colors duration-150 
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
+  .input-base {
+    @apply w-full rounded-lg border border-secondary-200 bg-white px-3.5 py-2.5 
+           text-sm text-gray-900 placeholder:text-secondary-400 
+           focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none 
+           transition-colors duration-150 
+           disabled:bg-secondary-50 disabled:cursor-not-allowed;
+  }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
+  .input-error {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+  }
 
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+  .label-base {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-secondary-100 p-6;
   }
 }
 
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-
-  @media (max-width: 1024px) {
-    font-size: 20px;
+/* Print styles for PDF export */
+@media print {
+  .no-print {
+    display: none !important;
   }
-}
 
-p {
-  margin: 0;
-}
+  body {
+    background: white;
+  }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+  .card {
+    border: 1px solid #e5e7eb;
+    box-shadow: none;
+  }
 }

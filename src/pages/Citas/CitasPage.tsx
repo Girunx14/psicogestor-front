@@ -1,0 +1,319 @@
+import { useState, useMemo, useCallback } from 'react';
+import { Plus, ChevronLeft, ChevronRight, Video, MapPin } from 'lucide-react';
+import Topbar from '@/components/layout/Topbar';
+import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import { useCitas, useCreateCita, useUpdateEstadoCita } from '@/hooks/useCitas';
+import { useHorarios } from '@/hooks/useHorarios';
+import type { Cita, EstadoCita } from '@/types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const citaSchema = z.object({
+  horario_id: z.coerce.number().min(1, 'Selecciona un horario'),
+  paciente_id: z.string().min(1, 'Ingresa el ID del paciente'),
+  motivo: z.string(),
+  enlace_videollamada: z.string(),
+});
+
+type CitaSchemaType = z.infer<typeof citaSchema>;
+
+const estadoBadge: Record<EstadoCita, { label: string; variant: 'info' | 'success' | 'danger' | 'warning' }> = {
+  pendiente: { label: 'Pendiente', variant: 'warning' },
+  confirmada: { label: 'Confirmada', variant: 'info' },
+  completada: { label: 'Completada', variant: 'success' },
+  cancelada: { label: 'Cancelada', variant: 'danger' },
+};
+
+const HOURS = Array.from({ length: 12 }, (_, i) => i + 7); // 7:00 - 18:00
+const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie'];
+
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+export default function CitasPage() {
+  const [currentWeek, setCurrentWeek] = useState(() => getWeekStart(new Date()));
+  const [modalOpen, setModalOpen] = useState(false);
+  const { data: citas, isLoading } = useCitas();
+  const { data: horarios } = useHorarios();
+  const createMutation = useCreateCita();
+  const updateEstadoMutation = useUpdateEstadoCita();
+
+  const weekDays = useMemo(() => {
+    return Array.from({ length: 5 }, (_, i) => {
+      const d = new Date(currentWeek);
+      d.setDate(d.getDate() + i);
+      return d;
+    });
+  }, [currentWeek]);
+
+  const prevWeek = () => {
+    const d = new Date(currentWeek);
+    d.setDate(d.getDate() - 7);
+    setCurrentWeek(d);
+  };
+
+  const nextWeek = () => {
+    const d = new Date(currentWeek);
+    d.setDate(d.getDate() + 7);
+    setCurrentWeek(d);
+  };
+
+  const goToToday = () => setCurrentWeek(getWeekStart(new Date()));
+
+  // Group appointments by day/hour using the enriched fecha/hora_inicio fields
+  const citasBySlot = useMemo(() => {
+    const map: Record<string, Cita[]> = {};
+    const citasList = Array.isArray(citas) ? citas : [];
+    citasList.forEach((c) => {
+      if (!c.fecha || !c.hora_inicio) return;
+      const hour = parseInt(c.hora_inicio.split(':')[0], 10);
+      const key = `${c.fecha}-${hour}`;
+      if (!map[key]) map[key] = [];
+      map[key].push(c);
+    });
+    return map;
+  }, [citas]);
+
+  // Available horarios for the select
+  const availableHorarios = (horarios ?? []).filter((h) => h.disponible);
+
+  // Form
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CitaSchemaType>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(citaSchema) as any,
+    defaultValues: {
+      horario_id: 0,
+      paciente_id: '',
+      motivo: '',
+      enlace_videollamada: '',
+    },
+  });
+
+  const onSubmit = useCallback(
+    (data: CitaSchemaType) => {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          setModalOpen(false);
+          reset();
+        },
+      });
+    },
+    [createMutation, reset],
+  );
+
+  const monthLabel = currentWeek.toLocaleDateString('es-MX', {
+    month: 'long',
+    year: 'numeric',
+  });
+
+  return (
+    <>
+      <Topbar title="Agenda de Citas" subtitle="Vista semanal" />
+      <main className="flex-1 p-6 lg:p-8">
+        {/* Toolbar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={prevWeek}>
+              <ChevronLeft size={18} />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={goToToday}>
+              Hoy
+            </Button>
+            <Button variant="ghost" size="sm" onClick={nextWeek}>
+              <ChevronRight size={18} />
+            </Button>
+            <span className="text-sm font-medium text-gray-700 capitalize ml-2">{monthLabel}</span>
+          </div>
+          <Button onClick={() => setModalOpen(true)}>
+            <Plus size={18} />
+            Nueva Cita
+          </Button>
+        </div>
+
+        {/* Weekly grid */}
+        <div className="bg-white rounded-xl border border-secondary-100 overflow-hidden">
+          {isLoading ? (
+            <div className="p-12 text-center">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[700px]">
+                <thead>
+                  <tr className="border-b border-secondary-100">
+                    <th className="w-16 px-3 py-3 text-xs font-medium text-secondary-400" />
+                    {weekDays.map((day, i) => {
+                      const isToday = formatDate(day) === formatDate(new Date());
+                      return (
+                        <th
+                          key={i}
+                          className={`px-3 py-3 text-center ${isToday ? 'bg-primary-50' : ''}`}
+                        >
+                          <p className="text-xs font-medium text-secondary-400">{DAYS[i]}</p>
+                          <p
+                            className={`text-lg font-bold ${
+                              isToday ? 'text-primary' : 'text-gray-900'
+                            }`}
+                          >
+                            {day.getDate()}
+                          </p>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {HOURS.map((hour) => (
+                    <tr key={hour} className="border-b border-secondary-50">
+                      <td className="px-3 py-2 text-xs text-secondary-400 text-right align-top">
+                        {hour}:00
+                      </td>
+                      {weekDays.map((day, i) => {
+                        const key = `${formatDate(day)}-${hour}`;
+                        const slotCitas = citasBySlot[key] || [];
+                        return (
+                          <td
+                            key={i}
+                            className="px-1.5 py-1.5 align-top min-h-[60px] border-l border-secondary-50"
+                          >
+                            {slotCitas.map((cita) => {
+                              const badge = estadoBadge[cita.estado];
+                              return (
+                                <div
+                                  key={cita.id}
+                                  className="mb-1 p-2 rounded-lg bg-primary-50 border border-primary-100 text-xs group relative"
+                                >
+                                  <p className="font-medium text-primary truncate">
+                                    Paciente
+                                  </p>
+                                  <p className="text-primary-400 flex items-center gap-1 mt-0.5">
+                                    {cita.tipo === 'virtual' ? <Video size={10} /> : <MapPin size={10} />}
+                                    {cita.hora_inicio?.slice(0, 5)} - {cita.hora_fin?.slice(0, 5)} · {cita.tipo}
+                                  </p>
+                                  {cita.motivo && (
+                                    <p className="text-primary-300 truncate mt-0.5">{cita.motivo}</p>
+                                  )}
+                                  <Badge variant={badge.variant} className="mt-1">
+                                    {badge.label}
+                                  </Badge>
+                                  {/* Action buttons on hover */}
+                                  {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && (
+                                    <div className="hidden group-hover:flex gap-1 mt-1.5">
+                                      {cita.estado === 'pendiente' && (
+                                        <button
+                                          onClick={() =>
+                                            updateEstadoMutation.mutate({
+                                              id: cita.id,
+                                              data: { estado: 'confirmada' },
+                                            })
+                                          }
+                                          className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                        >
+                                          Confirmar
+                                        </button>
+                                      )}
+                                      {cita.estado === 'confirmada' && (
+                                        <button
+                                          onClick={() =>
+                                            updateEstadoMutation.mutate({
+                                              id: cita.id,
+                                              data: { estado: 'completada' },
+                                            })
+                                          }
+                                          className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                        >
+                                          Completar
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() =>
+                                          updateEstadoMutation.mutate({
+                                            id: cita.id,
+                                            data: { estado: 'cancelada' },
+                                          })
+                                        }
+                                        className="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 hover:bg-red-200"
+                                      >
+                                        Cancelar
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* New appointment modal */}
+        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Nueva Cita" size="lg">
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
+            <Select
+              label="Horario Disponible"
+              placeholder="Selecciona un horario"
+              error={errors.horario_id?.message}
+              options={availableHorarios.map((h) => ({
+                value: h.id,
+                label: `${h.fecha} — ${h.hora_inicio.slice(0, 5)} a ${h.hora_fin.slice(0, 5)} (${h.tipo})`,
+              }))}
+              {...register('horario_id')}
+            />
+            <Input
+              label="ID del Paciente (UUID)"
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              error={errors.paciente_id?.message}
+              {...register('paciente_id')}
+            />
+            <Textarea
+              label="Motivo de la cita"
+              placeholder="Describe brevemente el motivo..."
+              {...register('motivo')}
+            />
+            <Input
+              label="Enlace de videollamada (opcional)"
+              placeholder="https://meet.google.com/..."
+              {...register('enlace_videollamada')}
+            />
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" isLoading={createMutation.isPending}>
+                Crear Cita
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      </main>
+    </>
+  );
+}
