@@ -9,6 +9,13 @@ export function useHorarios(params: Record<string, unknown> = {}) {
   });
 }
 
+export function useHorariosPaciente(params: Record<string, unknown> = {}) {
+  return useQuery({
+    queryKey: ['horarios_paciente', params],
+    queryFn: () => horariosApi.getAllForPaciente(params),
+  });
+}
+
 export function useCreateHorario() {
   const queryClient = useQueryClient();
   return useMutation({

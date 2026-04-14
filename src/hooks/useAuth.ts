@@ -47,3 +47,38 @@ export function useLogin() {
     },
   });
 }
+
+export function useLoginPaciente() {
+  const login = useAuthStore((s) => s.login);
+
+  return useMutation({
+    mutationFn: async (data: { numero_control: string; fecha_nacimiento: string }) => {
+      const { access_token } = await authApi.loginPaciente(data.numero_control, data.fecha_nacimiento);
+      localStorage.setItem('token', access_token);
+      
+      const payloadBase64 = access_token.split('.')[1];
+      const payloadDecoded = JSON.parse(atob(payloadBase64));
+      const userId = payloadDecoded.sub; // For patient it's UUID string, not int
+
+      // Mock User structure for Paciente using token payload
+      const user: User = {
+        id: userId,
+        username: payloadDecoded.username,
+        rol_id: 3, // Assuming 3 is Paciente
+        creado_en: new Date().toISOString(),
+        rol: {
+          id: 3,
+          nombre: 'paciente',
+        },
+      };
+      
+      return { access_token, user };
+    },
+    onSuccess: ({ access_token, user }) => {
+      login(access_token, user);
+    },
+    onError: () => {
+      localStorage.removeItem('token');
+    },
+  });
+}

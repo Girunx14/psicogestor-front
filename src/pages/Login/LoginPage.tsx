@@ -1,125 +1,188 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from 'react-router-dom';
-import { useLogin } from '@/hooks/useAuth';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { useLogin, useLoginPaciente } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import { Brain } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
-const loginSchema = z.object({
+const loginStaffSchema = z.object({
   username: z.string().min(1, 'El usuario es requerido'),
   password: z.string().min(1, 'La contraseña es requerida'),
 });
 
-type LoginForm = z.infer<typeof loginSchema>;
+const loginPacienteSchema = z.object({
+  numero_control: z.string().min(1, 'El número de control es requerido'),
+  fecha_nacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
+});
+
+type LoginStaffForm = z.infer<typeof loginStaffSchema>;
+type LoginPacienteForm = z.infer<typeof loginPacienteSchema>;
 
 export default function LoginPage() {
+  const [authMode, setAuthMode] = useState<'staff' | 'paciente'>('staff');
   const navigate = useNavigate();
   const loginMutation = useLogin();
+  const loginPacienteMutation = useLoginPaciente();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
 
-  // If already logged in, redirect to dashboard
-  if (isAuthenticated) {
-    navigate('/dashboard', { replace: true });
-  }
-
+  // Hooks must be called before any early return!
+  // Forms
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+    register: registerStaff,
+    handleSubmit: handleSubmitStaff,
+    formState: { errors: errorsStaff },
+  } = useForm<LoginStaffForm>({
+    resolver: zodResolver(loginStaffSchema),
   });
 
-  const onSubmit = (data: LoginForm) => {
+  const {
+    register: registerPaciente,
+    handleSubmit: handleSubmitPaciente,
+    formState: { errors: errorsPaciente },
+  } = useForm<LoginPacienteForm>({
+    resolver: zodResolver(loginPacienteSchema),
+  });
+
+  // Submits
+  const onSubmitStaff = (data: LoginStaffForm) => {
     loginMutation.mutate(data, {
       onSuccess: () => {
-        navigate('/dashboard', { replace: true });
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser?.rol?.nombre === 'paciente') {
+          navigate('/portal', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
       },
     });
   };
 
-  // Extract error message for display
+  const onSubmitPaciente = (data: LoginPacienteForm) => {
+    loginPacienteMutation.mutate(data, {
+      onSuccess: () => {
+        navigate('/portal', { replace: true });
+      },
+    });
+  };
+
+  // Errors
   const getErrorMessage = () => {
-    if (!loginMutation.isError) return null;
-    const error = loginMutation.error as { response?: { status?: number } };
+    const isError = authMode === 'staff' ? loginMutation.isError : loginPacienteMutation.isError;
+    const error: any = authMode === 'staff' ? loginMutation.error : loginPacienteMutation.error;
+    
+    if (!isError) return null;
     if (error?.response?.status === 429) {
       return 'Demasiados intentos. Espera un momento e intenta de nuevo.';
     }
-    return 'Credenciales inválidas. Verifica tu usuario y contraseña.';
+    return authMode === 'staff' 
+      ? 'Credenciales inválidas. Verifica tu usuario y contraseña.' 
+      : 'No encontramos tu expediente. Verifica tu número de control y fecha de nacimiento.';
   };
+
+  const isPending = authMode === 'staff' ? loginMutation.isPending : loginPacienteMutation.isPending;
+
+  // If already logged in, redirect (after all hooks are called)
+  if (isAuthenticated && user) {
+    if (user.rol?.nombre === 'paciente') {
+      return <Navigate to="/portal" replace />;
+    } else {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-primary px-4">
-      {/* Login card */}
       <div className="w-full max-w-md">
+        
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-4">
-            <Brain size={32} className="text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-4 shadow-lg shadow-primary/20 ring-1 ring-white/20">
+            <Brain size={36} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">PsicoGestor</h1>
-          <p className="text-primary-200 text-sm mt-1">
-            Instituto Tecnológico de Villahermosa
-          </p>
-          <p className="text-primary-300 text-xs mt-0.5">
-            Servicio de Psicoterapia — Subdirección Académica
+          <h1 className="text-3xl font-extrabold text-white tracking-tight">PsicoClínica</h1>
+          <p className="text-primary-100 mt-2 font-medium tracking-wide text-sm opacity-90 uppercase">
+            Sistema de Gestión
           </p>
         </div>
 
-        {/* Form card */}
-        <div className="bg-white rounded-2xl p-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">Iniciar Sesión</h2>
-          <p className="text-sm text-secondary-500 mb-6">
-            Ingresa tus credenciales para acceder al sistema
-          </p>
+        {/* Form panel */}
+        <div className="bg-white rounded-[24px] shadow-2xl overflow-hidden ring-1 ring-black/5">
+          
+          {/* Toggles */}
+          <div className="flex bg-gray-50 border-b border-gray-100 p-2 gap-2">
+            <button 
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                authMode === 'staff' ? 'bg-white text-primary shadow-sm ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setAuthMode('staff')}
+            >
+              Consultorio
+            </button>
+            <button 
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                authMode === 'paciente' ? 'bg-white text-primary shadow-sm ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'
+              }`}
+              onClick={() => setAuthMode('paciente')}
+            >
+              Paciente
+            </button>
+          </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              label="Usuario"
-              placeholder="Ingresa tu usuario"
-              error={errors.username?.message}
-              {...register('username')}
-            />
-
-            <Input
-              label="Contraseña"
-              type="password"
-              placeholder="Ingresa tu contraseña"
-              error={errors.password?.message}
-              {...register('password')}
-            />
-
-            {loginMutation.isError && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                <p className="text-sm text-red-700">
-                  {getErrorMessage()}
-                </p>
+          <div className="p-8 sm:p-10">
+            {getErrorMessage() && (
+              <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
+                {getErrorMessage()}
               </div>
             )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              isLoading={loginMutation.isPending}
-            >
-              Iniciar Sesión
-            </Button>
-          </form>
-
-          {/* Dev hint */}
-          <div className="mt-4 p-3 rounded-lg bg-secondary-50 border border-secondary-100">
-            <p className="text-[11px] text-secondary-400 font-medium mb-1">Credenciales de prueba:</p>
-            <p className="text-[11px] text-secondary-500">Admin: <code className="bg-secondary-100 px-1 rounded">admin</code> / <code className="bg-secondary-100 px-1 rounded">admin1234</code></p>
+            {authMode === 'staff' ? (
+              <form onSubmit={handleSubmitStaff(onSubmitStaff)} className="space-y-5">
+                <Input
+                  label="Usuario"
+                  error={errorsStaff.username?.message}
+                  {...registerStaff('username')}
+                />
+                <Input
+                  label="Contraseña"
+                  type="password"
+                  error={errorsStaff.password?.message}
+                  {...registerStaff('password')}
+                />
+                <Button type="submit" className="w-full h-12 text-base font-semibold mt-8" isLoading={isPending}>
+                  Iniciar Sesión
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleSubmitPaciente(onSubmitPaciente)} className="space-y-5">
+                <Input
+                  label="Número de Control"
+                  placeholder="Ej. 18320000"
+                  error={errorsPaciente.numero_control?.message}
+                  {...registerPaciente('numero_control')}
+                />
+                <Input
+                  label="Fecha de Nacimiento"
+                  type="date"
+                  error={errorsPaciente.fecha_nacimiento?.message}
+                  {...registerPaciente('fecha_nacimiento')}
+                />
+                <Button type="submit" className="w-full h-12 text-base font-semibold mt-8" isLoading={isPending}>
+                  Entrar al Portal
+                </Button>
+              </form>
+            )}
+            
           </div>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-primary-300 text-xs mt-6">
-          Departamento de Desarrollo Académico
+        <p className="text-center text-primary-200/80 text-sm mt-8 font-medium">
+          &copy; {new Date().getFullYear()} Instituto Tecnológico de Villahermosa
         </p>
       </div>
     </div>

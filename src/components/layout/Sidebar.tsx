@@ -60,11 +60,11 @@ export default function Sidebar() {
         {/* Header / Branding */}
         <div className="px-6 py-6 border-b border-secondary-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
               <Brain size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-primary leading-tight">PsicoGestor</h1>
+              <h1 className="text-sm font-bold text-primary leading-tight">Servicio de Psicoterapia</h1>
               <p className="text-[11px] text-secondary-400 leading-tight">ITVH</p>
             </div>
           </div>

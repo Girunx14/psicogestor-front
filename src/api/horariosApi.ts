@@ -7,6 +7,11 @@ export const horariosApi = {
     return response.data;
   },
 
+  getAllForPaciente: async (params: Record<string, unknown> = {}): Promise<Horario[]> => {
+    const response = await axiosClient.get('/horarios/paciente/disponibles', { params });
+    return response.data;
+  },
+
   create: async (data: HorarioCreate): Promise<Horario> => {
     const response = await axiosClient.post('/horarios/', data);
     return response.data;

@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout';
+import PatientLayout from '@/components/layout/PatientLayout';
 import ProtectedRoute from '@/router/ProtectedRoute';
 import LoginPage from '@/pages/Login/LoginPage';
 import DashboardPage from '@/pages/Dashboard/DashboardPage';
@@ -13,15 +14,34 @@ import HorariosPage from '@/pages/Horarios/HorariosPage';
 import EstadisticasPage from '@/pages/Estadisticas/EstadisticasPage';
 import UsuariosPage from '@/pages/Usuarios/UsuariosPage';
 
+// Patient Portal
+import DashboardPacientePage from '@/pages/PortalPaciente/DashboardPacientePage';
+
 export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
   },
+  // Portal del Paciente (Rutas exclusivas)
+  {
+    path: '/portal',
+    element: (
+      <ProtectedRoute>
+        <PatientLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <DashboardPacientePage />,
+      },
+    ],
+  },
+  // Panel principal Psicólogo/Administrador
   {
     path: '/',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute requiredRole="psicologo">
         <AppLayout />
       </ProtectedRoute>
     ),

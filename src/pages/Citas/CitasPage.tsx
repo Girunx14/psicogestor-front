@@ -291,6 +291,7 @@ export default function CitasPage() {
             />
             <Select
               label="Paciente"
+              placeholder="Selecciona un paciente"
               error={errors.paciente_id?.message}
               options={(pacientesData?.items ?? []).map((p) => ({
                 value: p.id,

@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import Topbar from '@/components/layout/Topbar';
 import SearchInput from '@/components/ui/SearchInput';
 import DataTable from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
@@ -26,100 +25,165 @@ export default function PacientesListPage() {
 
   const columns = [
     {
+      key: 'nombre_completo',
+      header: <span className="text-xs font-bold tracking-widest text-[#1A365D]">NOMBRE COMPLETO</span>,
+      render: (p: PacienteListItem) => {
+        // Initials avatar
+        const init = (p.nombres?.[0] || '') + (p.apellido_paterno?.[0] || '');
+        return (
+          <div className="flex items-center gap-4 py-2">
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <span className="text-sm font-bold text-[#1A365D]">{init.toUpperCase()}</span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 leading-tight">
+                {p.nombres} {p.apellido_paterno}
+              </p>
+              <p className="text-sm text-gray-700 leading-tight mt-0.5">{p.apellido_materno}</p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       key: 'numero_control',
-      header: 'No. Control',
+      header: <span className="text-xs font-bold tracking-widest text-[#1A365D]">NO. CONTROL</span>,
       render: (p: PacienteListItem) => (
-        <span className="font-medium text-gray-900">{p.numero_control}</span>
+        <span className="font-medium text-gray-600 font-mono">{p.numero_control}</span>
       ),
     },
     {
-      key: 'nombre_completo',
-      header: 'Nombre',
+      key: 'carrera',
+      header: <span className="text-xs font-bold tracking-widest text-[#1A365D]">CARRERA</span>,
       render: (p: PacienteListItem) => (
-        <div>
-          <p className="font-medium text-gray-900">
-            {p.nombres} {p.apellido_paterno} {p.apellido_materno}
-          </p>
-          <p className="text-xs text-secondary-400">{p.carrera || '—'}</p>
-        </div>
+        <span className="inline-flex items-center px-2.5 py-1 rounded bg-blue-100/50 text-[#1A365D] text-xs font-medium border border-blue-200">
+          {p.carrera || 'No registrada'}
+        </span>
       ),
     },
     {
       key: 'semestre',
-      header: 'Semestre',
-      render: (p: PacienteListItem) => `${p.semestre}°`,
-    },
-    {
-      key: 'sexo',
-      header: 'Sexo',
-      render: (p: PacienteListItem) => p.sexo,
+      header: <span className="text-xs font-bold tracking-widest text-[#1A365D]">SEMESTRE</span>,
+      render: (p: PacienteListItem) => <span className="font-semibold text-gray-800">{p.semestre}°</span>,
     },
     {
       key: 'fecha',
-      header: 'Registro',
-      render: (p: PacienteListItem) =>
-        new Date(p.fecha_registro).toLocaleDateString('es-MX', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }),
+      header: <span className="text-xs font-bold tracking-widest text-[#1A365D]">FECHA CREACIÓN</span>,
+      render: (p: PacienteListItem) => (
+        <span className="text-sm text-gray-500">
+          {new Date(p.fecha_registro).toLocaleDateString('es-MX', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          })}
+        </span>
+      ),
     },
   ];
 
   return (
     <>
-      <Topbar title="Pacientes" subtitle="Gestión de expedientes clínicos" />
-      <main className="flex-1 p-6 lg:p-8">
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div className="w-full sm:w-80">
-            <SearchInput
-              onChange={handleSearch}
-              placeholder="Buscar por nombre o No. Control..."
-            />
-          </div>
-          <Button onClick={() => navigate('/pacientes/nuevo')}>
-            <Plus size={18} />
-            Nuevo Paciente
-          </Button>
+      {/* Custom Header */}
+      <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 px-6 py-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold text-[#1A365D] tracking-tight">Pacientes</h1>
+          <p className="text-sm text-gray-500 mt-1 max-w-lg">
+            Gestión del padrón de alumnos atendidos por el servicio psicopedagógico del ITVH.
+          </p>
         </div>
+        <Button onClick={() => navigate('/pacientes/nuevo')} className="bg-[#1A365D] hover:bg-[#122643] shrink-0 shadow-md">
+          <Plus size={18} className="mr-2" />
+          Nuevo Paciente
+        </Button>
+      </div>
 
-        {/* Table */}
-        <DataTable
-          columns={columns}
-          data={data?.items ?? []}
-          keyExtractor={(p) => p.id}
-          onRowClick={(p) => navigate(`/pacientes/${p.id}`)}
-          isLoading={isLoading}
-          emptyMessage="No se encontraron pacientes"
-        />
-
-        {/* Pagination */}
-        {data && data.total_pages > 1 && (
-          <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-secondary-500">
-              Mostrando página {data.page} de {data.total_pages} ({data.total} pacientes)
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Anterior
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= data.total_pages}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Siguiente
-              </Button>
+      <main className="flex-1 p-6 lg:p-8 bg-gray-50/50 space-y-6">
+        
+        {/* Top Widgets */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] p-6 border-t-4 border-t-[#1A365D] border-x border-b border-gray-100 flex flex-col">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-bold text-gray-500 tracking-widest uppercase">Resumen Semanal</h3>
+              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <h2 className="text-4xl font-extrabold text-[#1A365D] tracking-tight">{data?.total || 0}</h2>
+                <p className="text-sm text-gray-500 mt-1">Pacientes Activos</p>
+              </div>
+              <div>
+                <h2 className="text-4xl font-extrabold text-orange-400 tracking-tight">12</h2>
+                <p className="text-sm text-gray-500 mt-1">Citas Esta Semana</p>
+              </div>
+              <div>
+                <h2 className="text-4xl font-extrabold text-[#1A365D] tracking-tight">05</h2>
+                <p className="text-sm text-gray-500 mt-1">Nuevos Ingresos</p>
+              </div>
             </div>
           </div>
-        )}
+          
+          <div className="bg-[#102A4A] rounded-xl shadow-lg p-6 text-white flex flex-col justify-center">
+            <h3 className="text-sm font-bold tracking-widest uppercase mb-3 text-blue-200">Aviso Institucional</h3>
+            <p className="text-sm leading-relaxed text-blue-50">
+              La actualización de expedientes clínicos debe realizarse máximo 24 horas después de la sesión.
+            </p>
+            <a href="#" className="text-xs font-bold underline mt-4 text-white hover:text-blue-200 transition-colors">
+              Ver protocolos de seguridad
+            </a>
+          </div>
+        </div>
+
+        {/* Toolbar & Table Card */}
+        <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border-t-4 border-t-[#1A365D] border-x border-b border-gray-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gray-50/50">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-bold text-gray-900">Listado General</h2>
+              <span className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full tracking-wider uppercase">CICLO ESCOLAR 2024-1</span>
+            </div>
+            <div className="w-full sm:w-64">
+              <SearchInput
+                onChange={handleSearch}
+                placeholder="Buscar por nombre o No. Control..."
+              />
+            </div>
+          </div>
+
+          <div className="bg-white">
+            <DataTable
+              columns={columns}
+              data={data?.items ?? []}
+              keyExtractor={(p) => p.id}
+              onRowClick={(p) => navigate(`/pacientes/${p.id}`)}
+              isLoading={isLoading}
+              emptyMessage="No se encontraron pacientes"
+            />
+          </div>
+
+          {/* Pagination Matches mockup */}
+          <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+            <p className="text-sm text-gray-500 font-medium">
+              Mostrando página {data?.page || 1} de {data?.total_pages || 1} ({data?.total || 0} pacientes)
+            </p>
+            <div className="flex gap-2">
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                className="text-xs font-bold text-[#1A365D] tracking-widest uppercase hover:bg-gray-200 px-3 py-1.5 rounded disabled:opacity-50 transition-colors"
+              >
+                Anterior
+              </button>
+              <button
+                disabled={page >= (data?.total_pages || 1)}
+                onClick={() => setPage((p) => p + 1)}
+                className="text-xs font-bold bg-[#1A365D] text-white tracking-widest uppercase hover:bg-[#122643] px-3 py-1.5 rounded disabled:opacity-50 transition-colors"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </div>
       </main>
     </>
   );

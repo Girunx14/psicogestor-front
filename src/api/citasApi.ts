@@ -12,6 +12,11 @@ export const citasApi = {
     return response.data;
   },
 
+  getMisCitas: async (): Promise<Cita[]> => {
+    const response = await axiosClient.get('/citas/mis-citas');
+    return response.data;
+  },
+
   createAsPsicologo: async (data: CitaCreate): Promise<Cita> => {
     const response = await axiosClient.post('/citas/psicologo', data);
     return response.data;

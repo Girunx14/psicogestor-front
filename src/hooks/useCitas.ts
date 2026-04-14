@@ -28,6 +28,24 @@ export function useCreateCita() {
   });
 }
 
+export function useMisCitas() {
+  return useQuery({
+    queryKey: ['mis-citas'],
+    queryFn: () => citasApi.getMisCitas(),
+  });
+}
+
+export function useCreateCitaPaciente() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CitaCreate) => citasApi.createAsPaciente(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mis-citas'] });
+      queryClient.invalidateQueries({ queryKey: ['horarios'] });
+    },
+  });
+}
+
 export function useUpdateEstadoCita() {
   const queryClient = useQueryClient();
   return useMutation({

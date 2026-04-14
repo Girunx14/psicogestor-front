@@ -2,7 +2,7 @@
 // Domain Types — Aligned with Backend API
 // ──────────────────────────────────────────────────
 
-export type UserRole = 'administrador' | 'psicologo';
+export type UserRole = 'administrador' | 'psicologo' | 'paciente';
 
 export interface Rol {
   id: number;

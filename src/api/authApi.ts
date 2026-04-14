@@ -6,4 +6,8 @@ export const authApi = {
     const response = await axiosClient.post('/auth/login', { username, password });
     return response.data;
   },
+  loginPaciente: async (numero_control: string, fecha_nacimiento: string): Promise<LoginResponse> => {
+    const response = await axiosClient.post('/auth/paciente/login', { numero_control, fecha_nacimiento });
+    return response.data;
+  },
 };
