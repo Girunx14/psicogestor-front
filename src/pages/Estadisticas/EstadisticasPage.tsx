@@ -14,7 +14,7 @@ export default function EstadisticasPage() {
 
   const stats = useMemo(() => {
     if (pacientesList.length === 0) return null;
-    
+
     const pList = pacientesList as any[];
     const total = pList.length;
 
@@ -87,12 +87,9 @@ export default function EstadisticasPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-bold text-[#1A365D]">Panel de Estadísticas</h1>
           {/* Faux Period Dropdown */}
-          <div className="hidden sm:flex items-center px-3 py-1.5 bg-gray-100 rounded-md text-sm text-gray-700 font-medium">
-            <Activity size={14} className="mr-2" />
-            Viendo Todo el Histórico
-          </div>
+
         </div>
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <Button variant="outline" className="hidden sm:inline-flex bg-gray-50 border-gray-200">
             <Bell size={16} className="text-gray-500" />
           </Button>
@@ -100,7 +97,7 @@ export default function EstadisticasPage() {
             <Download size={16} className="mr-2" />
             EXPORTAR REPORTE
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <main className="flex-1 p-6 lg:p-8 bg-gray-50/50 space-y-6">
@@ -178,12 +175,12 @@ export default function EstadisticasPage() {
                 <div className="h-64 relative flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie 
-                        data={stats.sexoData} 
-                        innerRadius={70} 
-                        outerRadius={95} 
-                        paddingAngle={2} 
-                        dataKey="value" 
+                      <Pie
+                        data={stats.sexoData}
+                        innerRadius={70}
+                        outerRadius={95}
+                        paddingAngle={2}
+                        dataKey="value"
                         stroke="none"
                       >
                         {stats.sexoData.map((_entry, index) => (
@@ -228,11 +225,11 @@ export default function EstadisticasPage() {
                         <span className="text-gray-500">{carrera.pct}%</span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">
-                        <div 
-                          className="h-2 rounded-full" 
-                          style={{ 
-                            width: `${carrera.pct}%`, 
-                            backgroundColor: COLORS[index % COLORS.length] 
+                        <div
+                          className="h-2 rounded-full"
+                          style={{
+                            width: `${carrera.pct}%`,
+                            backgroundColor: COLORS[index % COLORS.length]
                           }}
                         />
                       </div>
@@ -257,11 +254,11 @@ export default function EstadisticasPage() {
                           </div>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div 
-                            className="h-2 rounded-full" 
-                            style={{ 
-                              width: `${pct}%`, 
-                              backgroundColor: COLORS[index % COLORS.length] 
+                          <div
+                            className="h-2 rounded-full"
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: COLORS[index % COLORS.length]
                             }}
                           />
                         </div>
@@ -270,7 +267,7 @@ export default function EstadisticasPage() {
                   })}
                 </div>
               </div>
-              
+
             </div>
           </>
         )}
