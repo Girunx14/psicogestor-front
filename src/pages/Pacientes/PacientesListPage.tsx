@@ -98,49 +98,12 @@ export default function PacientesListPage() {
       </div>
 
       <main className="flex-1 p-6 lg:p-8 bg-gray-50/50 space-y-6">
-        
-        {/* Top Widgets */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] p-6 border-t-4 border-t-[#1A365D] border-x border-b border-gray-100 flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-sm font-bold text-gray-500 tracking-widest uppercase">Resumen Semanal</h3>
-              <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <h2 className="text-4xl font-extrabold text-[#1A365D] tracking-tight">{data?.total || 0}</h2>
-                <p className="text-sm text-gray-500 mt-1">Pacientes Activos</p>
-              </div>
-              <div>
-                <h2 className="text-4xl font-extrabold text-orange-400 tracking-tight">12</h2>
-                <p className="text-sm text-gray-500 mt-1">Citas Esta Semana</p>
-              </div>
-              <div>
-                <h2 className="text-4xl font-extrabold text-[#1A365D] tracking-tight">05</h2>
-                <p className="text-sm text-gray-500 mt-1">Nuevos Ingresos</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-[#102A4A] rounded-xl shadow-lg p-6 text-white flex flex-col justify-center">
-            <h3 className="text-sm font-bold tracking-widest uppercase mb-3 text-blue-200">Aviso Institucional</h3>
-            <p className="text-sm leading-relaxed text-blue-50">
-              La actualización de expedientes clínicos debe realizarse máximo 24 horas después de la sesión.
-            </p>
-            <a href="#" className="text-xs font-bold underline mt-4 text-white hover:text-blue-200 transition-colors">
-              Ver protocolos de seguridad
-            </a>
-          </div>
-        </div>
 
         {/* Toolbar & Table Card */}
         <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border-t-4 border-t-[#1A365D] border-x border-b border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gray-50/50">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-bold text-gray-900">Listado General</h2>
-              <span className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full tracking-wider uppercase">CICLO ESCOLAR 2024-1</span>
             </div>
             <div className="w-full sm:w-64">
               <SearchInput
