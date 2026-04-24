@@ -31,9 +31,9 @@ export function useUpdatePaciente(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: PacienteUpdate) => pacientesApi.update(id, data),
-    onSuccess: () => {
+    onSuccess: (updatedPaciente) => {
+      queryClient.setQueryData(['paciente', id], updatedPaciente);
       queryClient.invalidateQueries({ queryKey: ['pacientes'] });
-      queryClient.invalidateQueries({ queryKey: ['paciente', id] });
     },
   });
 }

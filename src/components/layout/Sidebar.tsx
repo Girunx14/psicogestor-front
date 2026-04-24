@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Users, Calendar, BarChart3, LogOut, Menu, X, Brain, Clock, UserCog, LayoutDashboard } from 'lucide-react';
+import { Users, Calendar, BarChart3, LogOut, Menu, X, Brain, Clock, UserCog, LayoutDashboard, Home } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { clsx } from 'clsx';
@@ -14,7 +14,7 @@ export default function Sidebar() {
   const isAdminUser = isAdmin();
 
   const navItems = [
-    { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, visible: true },
+    { to: '/bienvenida', label: 'Inicio', icon: Home, visible: true },
     { to: '/pacientes', label: 'Pacientes', icon: Users, visible: true },
     { to: '/citas', label: 'Citas', icon: Calendar, visible: true },
     { to: '/horarios', label: 'Horarios', icon: Clock, visible: true },

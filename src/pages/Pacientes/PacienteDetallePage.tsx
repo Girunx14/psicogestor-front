@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Calendar, Edit, Plus, FileText, Trash2 } from 'lucide-react';
+import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
-import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
@@ -91,92 +90,141 @@ export default function PacienteDetallePage() {
         {/* Patient info grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Datos personales */}
-          <Card>
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Datos Personales</h3>
-            <dl className="space-y-3 text-sm">
-              <Row label="Nombre completo" value={`${paciente.nombres} ${paciente.apellido_paterno} ${paciente.apellido_materno}`} />
-              <Row label="Fecha de nacimiento" value={new Date(paciente.fecha_nacimiento).toLocaleDateString('es-MX')} />
-              <Row label="Edad" value={edad !== null ? `${edad} años` : '—'} />
-              <Row label="Sexo" value={paciente.sexo} />
-            </dl>
-          </Card>
+          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
+            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                <User className="w-4 h-4 text-primary" />
+              </span>
+              <h3 className="text-sm font-semibold text-gray-900">Datos Personales</h3>
+            </div>
+            <div className="p-5">
+              <dl className="space-y-0 text-sm">
+                <Row label="Nombre completo" value={`${paciente.nombres} ${paciente.apellido_paterno} ${paciente.apellido_materno}`} />
+                <Row label="Fecha de nacimiento" value={new Date(paciente.fecha_nacimiento).toLocaleDateString('es-MX')} />
+                <Row label="Edad" value={edad !== null ? `${edad} años` : '—'} />
+                <Row label="Sexo" value={paciente.sexo === 'M' ? 'Masculino' : paciente.sexo === 'F' ? 'Femenino' : paciente.sexo} />
+              </dl>
+            </div>
+          </section>
 
           {/* Datos académicos */}
-          <Card>
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Datos Académicos</h3>
-            <dl className="space-y-3 text-sm">
-              <Row label="No. Control" value={paciente.numero_control} />
-              <Row label="Carrera" value={paciente.carrera || '—'} />
-              <Row label="Semestre" value={`${paciente.semestre}°`} />
-              <Row label="Localidad" value={paciente.localidad} />
-              <Row label="Municipio" value={paciente.municipio} />
-              <Row label="Religión" value={paciente.religion || '—'} />
-            </dl>
-          </Card>
+          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
+            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                <GraduationCap className="w-4 h-4 text-primary" />
+              </span>
+              <h3 className="text-sm font-semibold text-gray-900">Datos Académicos</h3>
+            </div>
+            <div className="p-5">
+              <dl className="space-y-0 text-sm">
+                <Row label="No. Control" value={paciente.numero_control} />
+                <Row label="Carrera" value={paciente.carrera || '—'} />
+                <Row label="Semestre" value={`${paciente.semestre}°`} />
+              </dl>
+            </div>
+          </section>
+
+          {/* Datos de origen */}
+          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
+            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                <MapPin className="w-4 h-4 text-primary" />
+              </span>
+              <h3 className="text-sm font-semibold text-gray-900">Datos de Origen</h3>
+            </div>
+            <div className="p-5">
+              <dl className="space-y-0 text-sm">
+                <Row label="Localidad" value={paciente.localidad} />
+                <Row label="Municipio" value={paciente.municipio} />
+                <Row label="Religión" value={paciente.religion || '—'} />
+              </dl>
+            </div>
+          </section>
 
           {/* Datos familiares */}
-          <Card>
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Datos Familiares</h3>
-            <dl className="space-y-3 text-sm">
-              <Row label="Con quién vive" value={paciente.con_quien_vive} />
-              <Row label="Nombre del Padre" value={paciente.nombre_padre || '—'} />
-              <Row label="Nombre de la Madre" value={paciente.nombre_madre || '—'} />
-              <Row label="Padres separados" value={paciente.padres_separados ? 'Sí' : 'No'} />
-            </dl>
-          </Card>
+          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
+            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                <Users className="w-4 h-4 text-primary" />
+              </span>
+              <h3 className="text-sm font-semibold text-gray-900">Datos Familiares</h3>
+            </div>
+            <div className="p-5">
+              <dl className="space-y-0 text-sm">
+                <Row label="Con quién vive" value={paciente.con_quien_vive} />
+                <Row label="Nombre del Padre" value={paciente.nombre_padre || '—'} />
+                <Row label="Nombre de la Madre" value={paciente.nombre_madre || '—'} />
+                <Row label="Padres separados" value={paciente.padres_separados ? 'Sí' : 'No'} />
+              </dl>
+            </div>
+          </section>
 
-          {/* Registro */}
-          <Card>
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">Información del Registro</h3>
-            <dl className="space-y-3 text-sm">
-              <Row label="Fecha de registro" value={new Date(paciente.fecha_registro).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })} />
-            </dl>
-          </Card>
+          {/* Información del registro */}
+          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary lg:col-span-2">
+            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                <ClipboardList className="w-4 h-4 text-primary" />
+              </span>
+              <h3 className="text-sm font-semibold text-gray-900">Información del Registro</h3>
+            </div>
+            <div className="p-5">
+              <dl className="space-y-0 text-sm">
+                <Row label="Fecha de registro" value={new Date(paciente.fecha_registro).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })} />
+              </dl>
+            </div>
+          </section>
         </div>
 
         {/* Notas de evolución */}
-        <Card>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Notas de Evolución</h3>
-            <span className="text-xs text-secondary-400">{notasData?.total ?? 0} notas</span>
+        <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                <FileText className="w-4 h-4 text-primary" />
+              </span>
+              <h3 className="text-sm font-semibold text-gray-900">Notas de Evolución</h3>
+            </div>
+            <span className="text-xs text-secondary-400 bg-secondary-50 px-2 py-1 rounded-full">{notasData?.total ?? 0} notas</span>
           </div>
 
-          {notas.length === 0 ? (
-            <EmptyState
-              icon={<FileText size={28} />}
-              title="Sin notas registradas"
-              description="Crea una nueva nota de evolución para iniciar el expediente clínico."
-            />
-          ) : (
-            <div className="space-y-3">
-              {notas.map((nota) => (
-                <div
-                  key={nota.id}
-                  className="flex items-center gap-4 p-3 rounded-lg hover:bg-surface transition-colors cursor-pointer"
-                  onClick={() => navigate(`/pacientes/${id}/notas/nueva?nota_id=${nota.id}`)}
-                >
-                  <div className="w-9 h-9 rounded-full bg-primary-50 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
-                    {nota.numero_sesion}
+          <div className="p-5">
+            {notas.length === 0 ? (
+              <EmptyState
+                icon={<FileText size={28} />}
+                title="Sin notas registradas"
+                description="Crea una nueva nota de evolución para iniciar el expediente clínico."
+              />
+            ) : (
+              <div className="space-y-3">
+                {notas.map((nota) => (
+                  <div
+                    key={nota.id}
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-surface transition-colors cursor-pointer border border-gray-100"
+                    onClick={() => navigate(`/pacientes/${id}/notas/nueva?nota_id=${nota.id}`)}
+                  >
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
+                      {nota.numero_sesion}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">
+                        Sesión {nota.numero_sesion}
+                      </p>
+                      <p className="text-xs text-secondary-400 flex items-center gap-1">
+                        <Calendar size={12} />
+                        {new Date(nota.fecha_hora).toLocaleDateString('es-MX', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    </div>
+                    <Badge variant="info">{nota.impresion_diagnostica || '—'}</Badge>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      Sesión {nota.numero_sesion}
-                    </p>
-                    <p className="text-xs text-secondary-400 flex items-center gap-1">
-                      <Calendar size={12} />
-                      {new Date(nota.fecha_hora).toLocaleDateString('es-MX', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                  <Badge variant="info">{nota.impresion_diagnostica || '—'}</Badge>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       {/* Delete confirmation modal */}
@@ -204,9 +252,9 @@ export default function PacienteDetallePage() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between">
-      <dt className="text-secondary-500">{label}</dt>
-      <dd className="text-gray-900 font-medium text-right">{value}</dd>
+    <div className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
+      <dt className="text-secondary-500 text-sm">{label}</dt>
+      <dd className="text-gray-900 font-medium text-sm text-right">{value}</dd>
     </div>
   );
 }

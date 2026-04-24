@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useLogin, useLoginPaciente } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
-import { Brain } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
@@ -56,7 +55,7 @@ export default function LoginPage() {
         if (currentUser?.rol?.nombre === 'paciente') {
           navigate('/portal', { replace: true });
         } else {
-          navigate('/dashboard', { replace: true });
+          navigate('/bienvenida', { replace: true });
         }
       },
     });
@@ -91,7 +90,7 @@ export default function LoginPage() {
     if (user.rol?.nombre === 'paciente') {
       return <Navigate to="/portal" replace />;
     } else {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/bienvenida" replace />;
     }
   }
 
@@ -101,13 +100,9 @@ export default function LoginPage() {
         
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 mb-4 shadow-lg shadow-primary/20 ring-1 ring-white/20">
-            <Brain size={36} className="text-white" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">PsicoClínica</h1>
-          <p className="text-primary-100 mt-2 font-medium tracking-wide text-sm opacity-90 uppercase">
-            Sistema de Gestión
-          </p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">
+            Servicio de Psicoterapia
+          </h1>
         </div>
 
         {/* Form panel */}
