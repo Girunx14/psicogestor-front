@@ -5,17 +5,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Save, ArrowLeft } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
-import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 import VoiceDictation from '@/features/sesiones/VoiceDictation';
-import { useCreateNota } from '@/hooks/useNotas';
+import { useCreateNota, useNotasPaciente } from '@/hooks/useNotas';
 
 const notaSchema = z.object({
   numero_sesion: z.coerce.number().min(1, 'El número de sesión es requerido'),
   impresion_diagnostica: z.string().min(1, 'La impresión diagnóstica es requerida'),
-  fecha_hora: z.string().min(1, 'La fecha y hora son requeridas'),
+  fecha_hora: z.string().min(1, 'La fecha es requerida'),
   nota_texto: z.string().min(1, 'El contenido de la nota es requerido'),
 });
 
@@ -24,6 +23,10 @@ type NotaSchemaType = z.infer<typeof notaSchema>;
 export default function NuevaSesionPage() {
   const { id: pacienteId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
+  const { data: notasData } = useNotasPaciente(pacienteId!);
+  const totalNotas = notasData?.total ?? 0;
+  const siguienteSesion = totalNotas + 1;
 
   const createNotaMutation = useCreateNota();
 
@@ -38,12 +41,17 @@ export default function NuevaSesionPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(notaSchema) as any,
     defaultValues: {
-      numero_sesion: 1,
+      numero_sesion: totalNotas + 1,
       impresion_diagnostica: '',
-      fecha_hora: new Date().toISOString().slice(0, 16),
+      fecha_hora: new Date().toISOString().slice(0, 10),
       nota_texto: '',
     },
   });
+
+  // Update session number when notas data loads
+  if (getValues('numero_sesion') === 1 && totalNotas > 0) {
+    setValue('numero_sesion', totalNotas + 1);
+  }
 
   // Voice dictation handler
   const handleVoiceTranscript = useCallback(
@@ -56,6 +64,7 @@ export default function NuevaSesionPage() {
 
   // Form fields watch for character count
   const notaTexto = watch('nota_texto');
+  const errorMessage = createNotaMutation.error?.response?.data?.detail;
 
   // Submit handler
   const onSubmit = async (data: NotaSchemaType) => {
@@ -64,7 +73,7 @@ export default function NuevaSesionPage() {
         paciente_id: pacienteId!,
         numero_sesion: data.numero_sesion,
         impresion_diagnostica: data.impresion_diagnostica,
-        fecha_hora: data.fecha_hora,
+        fecha_hora: `${data.fecha_hora}T00:00:00`,
         nota_texto: data.nota_texto,
       },
       {
@@ -77,7 +86,7 @@ export default function NuevaSesionPage() {
 
   return (
     <>
-      <Topbar title="Nueva Nota de Evolución" subtitle="Sesión de psicoterapia" />
+      <Topbar title="Nueva Nota de Evolución" subtitle={`Sesión ${siguienteSesion}`} />
       <main className="flex-1 p-6 lg:p-8">
         {/* Back */}
         <div className="flex items-center justify-between mb-6">
@@ -87,9 +96,22 @@ export default function NuevaSesionPage() {
           </Button>
         </div>
 
-        <Card>
+        <div className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-6 py-4 border-b border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900">Nueva Nota de Evolución</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Completa todos los campos requeridos</p>
+          </div>
+
+          {/* Error message */}
+          {errorMessage && (
+            <div className="mx-6 mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{errorMessage}</p>
+            </div>
+          )}
+
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit as any)} className="p-6 space-y-5">
             {/* Número de sesión y fecha */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
@@ -99,8 +121,8 @@ export default function NuevaSesionPage() {
                 {...register('numero_sesion')}
               />
               <Input
-                label="Fecha y Hora"
-                type="datetime-local"
+                label="Fecha"
+                type="date"
                 error={errors.fecha_hora?.message}
                 {...register('fecha_hora')}
               />
@@ -135,7 +157,7 @@ export default function NuevaSesionPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-secondary-100">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
               <Button
                 variant="outline"
                 type="button"
@@ -152,7 +174,7 @@ export default function NuevaSesionPage() {
               </Button>
             </div>
           </form>
-        </Card>
+        </div>
       </main>
     </>
   );
