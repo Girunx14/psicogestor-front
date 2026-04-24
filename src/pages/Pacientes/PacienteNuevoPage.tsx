@@ -19,13 +19,13 @@ export default function PacienteNuevoPage() {
 
   return (
     <>
-      <Topbar title="Nuevo Paciente" subtitle="Registro de expediente clínico" />
+      <Topbar title="Nuevo Usuario" subtitle="Registro de expediente clínico" />
       <main className="flex-1 p-6 lg:p-8">
         <Card>
           <PacienteFormFields
             onSubmit={handleSubmit}
             isSubmitting={createMutation.isPending}
-            submitLabel="Registrar Paciente"
+            submitLabel="Registrar Usuario"
           />
         </Card>
       </main>

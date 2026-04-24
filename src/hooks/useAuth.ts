@@ -23,7 +23,7 @@ export function useLogin() {
       let user: User;
       try {
         user = await usuariosApi.getById(userId);
-      } catch (error) {
+      } catch {
         user = {
           id: userId,
           username: payloadDecoded.username,

@@ -155,6 +155,9 @@ export default function PacienteDetallePage() {
                 <Row label="Nombre del Padre" value={paciente.nombre_padre || '—'} />
                 <Row label="Nombre de la Madre" value={paciente.nombre_madre || '—'} />
                 <Row label="Padres separados" value={paciente.padres_separados ? 'Sí' : 'No'} />
+                {paciente.padres_separados && paciente.anios_padres_separados && (
+                  <Row label="Años de separación" value={`${paciente.anios_padres_separados} años`} />
+                )}
               </dl>
             </div>
           </section>

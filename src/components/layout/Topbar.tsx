@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/authStore';
-import { User } from 'lucide-react';
+import { useUIStore } from '@/store/uiStore';
+import { User, Menu } from 'lucide-react';
 
 interface TopbarProps {
   title: string;
@@ -8,16 +9,26 @@ interface TopbarProps {
 
 export default function Topbar({ title, subtitle }: TopbarProps) {
   const user = useAuthStore((s) => s.user);
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
 
   return (
     <header className="bg-white border-b border-secondary-100 px-6 lg:px-8 py-4">
       <div className="flex items-center justify-between">
-        {/* Page title */}
-        <div className="pl-12 lg:pl-0">
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-          {subtitle && (
-            <p className="text-sm text-secondary-500 mt-0.5">{subtitle}</p>
-          )}
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={toggleSidebar}
+            className="p-2 text-secondary-400 hover:text-primary hover:bg-surface rounded-lg transition-all"
+            title="Alternar Menú"
+          >
+            <Menu size={20} />
+          </button>
+          {/* Page title */}
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+            {subtitle && (
+              <p className="text-sm text-secondary-500 mt-0.5">{subtitle}</p>
+            )}
+          </div>
         </div>
 
         {/* User info */}

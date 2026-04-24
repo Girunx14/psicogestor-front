@@ -1,18 +1,18 @@
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip as PieTooltip, BarChart, Bar, XAxis, YAxis, Tooltip as BarTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Activity, Download, Bell } from 'lucide-react';
-import Topbar from '@/components/layout/Topbar';
+import { Activity, Menu } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
-import Button from '@/components/ui/Button';
+import { useUIStore } from '@/store/uiStore';
 import { usePacientes } from '@/hooks/usePacientes';
 
 const COLORS = ['#1A365D', '#4A5568', '#A0AEC0', '#CBD5E1', '#E2E8F0', '#F1F5F9'];
 
 export default function EstadisticasPage() {
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const { data: pacientesData, isLoading } = usePacientes({ page: 1, per_page: 500 });
-  const pacientesList = pacientesData?.items ?? [];
 
   const stats = useMemo(() => {
+    const pacientesList = pacientesData?.items ?? [];
     if (pacientesList.length === 0) return null;
 
     const pList = pacientesList as any[];
@@ -78,13 +78,20 @@ export default function EstadisticasPage() {
     const pacientesMes = pList.filter(p => new Date(p.fecha_registro).getMonth() === currMonth).length;
 
     return { total, porcentajeDivorciados, sexoData, semestreData, edadData, carreraData, promedioEdad, pacientesMes };
-  }, [pacientesList]);
+  }, [pacientesData?.items]);
 
   return (
     <>
       {/* Custom Header for Estadísticas to match mockup */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-10">
         <div className="flex items-center gap-4">
+          <button 
+            onClick={toggleSidebar}
+            className="p-2 text-gray-400 hover:text-[#1A365D] hover:bg-gray-50 rounded-lg transition-all"
+            title="Alternar Menú"
+          >
+            <Menu size={24} />
+          </button>
           <h1 className="text-xl font-bold text-[#1A365D]">Panel de Estadísticas</h1>
           {/* Faux Period Dropdown */}
 

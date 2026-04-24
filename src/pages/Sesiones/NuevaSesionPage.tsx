@@ -16,6 +16,7 @@ const notaSchema = z.object({
   impresion_diagnostica: z.string().min(1, 'La impresión diagnóstica es requerida'),
   fecha_hora: z.string().min(1, 'La fecha es requerida'),
   nota_texto: z.string().min(1, 'El contenido de la nota es requerido'),
+  transcripcion_entrevista: z.string().optional(),
 });
 
 type NotaSchemaType = z.infer<typeof notaSchema>;
@@ -45,6 +46,7 @@ export default function NuevaSesionPage() {
       impresion_diagnostica: '',
       fecha_hora: new Date().toISOString().slice(0, 10),
       nota_texto: '',
+      transcripcion_entrevista: '',
     },
   });
 
@@ -64,7 +66,7 @@ export default function NuevaSesionPage() {
 
   // Form fields watch for character count
   const notaTexto = watch('nota_texto');
-  const errorMessage = createNotaMutation.error?.response?.data?.detail;
+  const errorMessage = (createNotaMutation.error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
 
   // Submit handler
   const onSubmit = async (data: NotaSchemaType) => {
@@ -75,6 +77,7 @@ export default function NuevaSesionPage() {
         impresion_diagnostica: data.impresion_diagnostica,
         fecha_hora: `${data.fecha_hora}T00:00:00`,
         nota_texto: data.nota_texto,
+        transcripcion_entrevista: data.transcripcion_entrevista || undefined,
       },
       {
         onSuccess: () => {
@@ -154,6 +157,23 @@ export default function NuevaSesionPage() {
               <p className="text-xs text-secondary-400 mt-1 text-right">
                 {notaTexto?.length ?? 0} caracteres
               </p>
+            </div>
+
+            {/* Transcripción de la entrevista */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="label-base mb-0">Transcripción de la Entrevista</label>
+                <VoiceDictation
+                  onTranscript={handleVoiceTranscript('transcripcion_entrevista')}
+                  targetFieldLabel="Transcripción"
+                />
+              </div>
+              <Textarea
+                placeholder="Registra la transcripción completa de la entrevista o sesión..."
+                error={errors.transcripcion_entrevista?.message}
+                className="min-h-[150px]"
+                {...register('transcripcion_entrevista')}
+              />
             </div>
 
             {/* Actions */}

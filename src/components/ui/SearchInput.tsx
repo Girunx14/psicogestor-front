@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useEffect, type ChangeEvent } from 'react';
 import { Search } from 'lucide-react';
 

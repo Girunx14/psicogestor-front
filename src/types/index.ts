@@ -84,6 +84,7 @@ export interface Paciente {
   nombre_padre: string;
   nombre_madre: string;
   padres_separados: boolean;
+  anios_padres_separados: number | null;
   fecha_registro: string; // ISO datetime
 }
 
@@ -103,6 +104,7 @@ export interface PacienteCreate {
   nombre_padre: string;
   nombre_madre: string;
   padres_separados: boolean;
+  anios_padres_separados: number | null;
 }
 
 export type PacienteUpdate = Partial<PacienteCreate>;
@@ -184,7 +186,8 @@ export interface NotaEvolucion {
   numero_sesion: number;
   impresion_diagnostica: string;
   fecha_hora: string;
-  nota_texto: string;
+  nota_texto: string | null;
+  transcripcion_entrevista: string | null;
   creado_en: string;
 }
 
@@ -194,11 +197,13 @@ export interface NotaEvolucionCreate {
   impresion_diagnostica: string;
   fecha_hora: string;
   nota_texto: string;
+  transcripcion_entrevista?: string;
 }
 
 export interface NotaEvolucionUpdate {
   impresion_diagnostica?: string;
   nota_texto?: string;
+  transcripcion_entrevista?: string;
   fecha_hora?: string;
 }
 

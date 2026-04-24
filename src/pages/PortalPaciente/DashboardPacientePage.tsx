@@ -33,7 +33,7 @@ export default function DashboardPacientePage() {
     reset,
     formState: { errors },
   } = useForm<CitaSchemaType>({
-    resolver: zodResolver(citaSchema) as any,
+    resolver: zodResolver(citaSchema),
     defaultValues: {
       horario_id: 0,
       motivo: '',
@@ -148,7 +148,7 @@ export default function DashboardPacientePage() {
 
       {/* Modal para agendar cita */}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Agendar Nueva Cita" size="md">
-        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <p className="text-sm text-secondary-600 mb-4 bg-primary/10 p-3 rounded-lg text-primary-900 border border-primary/20">
             <strong>Instrucciones:</strong> Elige primero la modalidad (Presencial o Virtual), selecciona el horario disponible, y cuéntanos brevemente el motivo para que el psicólogo prepare la sesión.
           </p>

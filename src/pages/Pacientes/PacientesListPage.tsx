@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Menu } from 'lucide-react';
 import SearchInput from '@/components/ui/SearchInput';
 import DataTable from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
+import { useUIStore } from '@/store/uiStore';
 import { usePacientes } from '@/hooks/usePacientes';
 import type { PacienteListItem } from '@/types';
 
@@ -11,6 +12,7 @@ export default function PacientesListPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
 
   const { data, isLoading } = usePacientes({
     page,
@@ -85,15 +87,24 @@ export default function PacientesListPage() {
     <>
       {/* Custom Header */}
       <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 px-6 py-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold text-[#1A365D] tracking-tight">Pacientes</h1>
-          <p className="text-sm text-gray-500 mt-1 max-w-lg">
-            Gestión del padrón de alumnos atendidos por el servicio psicopedagógico del ITVH.
-          </p>
+        <div className="flex items-start gap-4">
+          <button 
+            onClick={toggleSidebar}
+            className="p-2 mt-1 text-gray-400 hover:text-[#1A365D] hover:bg-gray-100 rounded-lg transition-all"
+            title="Alternar Menú"
+          >
+            <Menu size={24} />
+          </button>
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#1A365D] tracking-tight">Usuarios del Servicio de Psicología del ITV</h1>
+            <p className="text-sm text-gray-500 mt-1 max-w-lg">
+              Gestión del padrón de alumnos atendidos por el servicio psicopedagógico del ITVH.
+            </p>
+          </div>
         </div>
         <Button onClick={() => navigate('/pacientes/nuevo')} className="bg-[#1A365D] hover:bg-[#122643] shrink-0 shadow-md">
           <Plus size={18} className="mr-2" />
-          Nuevo Paciente
+          Nuevo Usuario
         </Button>
       </div>
 

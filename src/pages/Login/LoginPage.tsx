@@ -3,182 +3,140 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { useLogin, useLoginPaciente } from '@/hooks/useAuth';
+import { useLogin } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/authStore';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
-const loginStaffSchema = z.object({
+const loginSchema = z.object({
   username: z.string().min(1, 'El usuario es requerido'),
   password: z.string().min(1, 'La contraseña es requerida'),
 });
 
-const loginPacienteSchema = z.object({
-  numero_control: z.string().min(1, 'El número de control es requerido'),
-  fecha_nacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
-});
-
-type LoginStaffForm = z.infer<typeof loginStaffSchema>;
-type LoginPacienteForm = z.infer<typeof loginPacienteSchema>;
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const [authMode, setAuthMode] = useState<'staff' | 'paciente'>('staff');
   const navigate = useNavigate();
   const loginMutation = useLogin();
-  const loginPacienteMutation = useLoginPaciente();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
-
-  // Hooks must be called before any early return!
-  // Forms
-  const {
-    register: registerStaff,
-    handleSubmit: handleSubmitStaff,
-    formState: { errors: errorsStaff },
-  } = useForm<LoginStaffForm>({
-    resolver: zodResolver(loginStaffSchema),
-  });
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
-    register: registerPaciente,
-    handleSubmit: handleSubmitPaciente,
-    formState: { errors: errorsPaciente },
-  } = useForm<LoginPacienteForm>({
-    resolver: zodResolver(loginPacienteSchema),
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
   });
 
-  // Submits
-  const onSubmitStaff = (data: LoginStaffForm) => {
+  const onSubmit = (data: LoginForm) => {
+    setErrorMessage(null);
     loginMutation.mutate(data, {
       onSuccess: () => {
-        const currentUser = useAuthStore.getState().user;
-        if (currentUser?.rol?.nombre === 'paciente') {
-          navigate('/portal', { replace: true });
+        navigate('/bienvenida', { replace: true });
+      },
+      onError: (error: unknown) => {
+        const err = error as { response?: { status?: number } };
+        if (err?.response?.status === 429) {
+          setErrorMessage('Demasiados intentos. Espera un momento e intenta de nuevo.');
         } else {
-          navigate('/bienvenida', { replace: true });
+          setErrorMessage('Credenciales inválidas. Verifica tu usuario y contraseña.');
         }
       },
     });
   };
 
-  const onSubmitPaciente = (data: LoginPacienteForm) => {
-    loginPacienteMutation.mutate(data, {
-      onSuccess: () => {
-        navigate('/portal', { replace: true });
-      },
-    });
-  };
-
-  // Errors
-  const getErrorMessage = () => {
-    const isError = authMode === 'staff' ? loginMutation.isError : loginPacienteMutation.isError;
-    const error: any = authMode === 'staff' ? loginMutation.error : loginPacienteMutation.error;
-    
-    if (!isError) return null;
-    if (error?.response?.status === 429) {
-      return 'Demasiados intentos. Espera un momento e intenta de nuevo.';
-    }
-    return authMode === 'staff' 
-      ? 'Credenciales inválidas. Verifica tu usuario y contraseña.' 
-      : 'No encontramos tu expediente. Verifica tu número de control y fecha de nacimiento.';
-  };
-
-  const isPending = authMode === 'staff' ? loginMutation.isPending : loginPacienteMutation.isPending;
-
-  // If already logged in, redirect (after all hooks are called)
   if (isAuthenticated && user) {
-    if (user.rol?.nombre === 'paciente') {
-      return <Navigate to="/portal" replace />;
-    } else {
-      return <Navigate to="/bienvenida" replace />;
-    }
+    return <Navigate to="/bienvenida" replace />;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-primary px-4">
-      <div className="w-full max-w-md">
-        
-        {/* Branding */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            Servicio de Psicoterapia
-          </h1>
+    <div
+      className="min-h-screen flex"
+      style={{ background: 'linear-gradient(135deg, #1A365D 0%, #742A2A 100%)' }}
+    >
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-16 xl:px-24">
+        <div className="flex flex-col items-start gap-6 mb-8">
+          <img
+            src="/images/logo-itvh.webp"
+            alt="ITVH"
+            className="h-24 w-auto"
+          />
+          <img
+            src="/images/logo-tecnm.png"
+            alt="TecNM"
+            className="h-16 w-auto"
+          />
         </div>
+        <h1
+          className="text-6xl xl:text-7xl font-bold text-white tracking-tight mb-4"
+          style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+        >
+          BIENVENIDOS
+        </h1>
+        <p className="text-xl text-white/90 font-medium">
+          Plataforma de Gestión Psicológica
+        </p>
+      </div>
 
-        {/* Form panel */}
-        <div className="bg-white rounded-[24px] shadow-2xl overflow-hidden ring-1 ring-black/5">
-          
-          {/* Toggles */}
-          <div className="flex bg-gray-50 border-b border-gray-100 p-2 gap-2">
-            <button 
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
-                authMode === 'staff' ? 'bg-white text-primary shadow-sm ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setAuthMode('staff')}
-            >
-              Consultorio
-            </button>
-            <button 
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
-                authMode === 'paciente' ? 'bg-white text-primary shadow-sm ring-1 ring-gray-200/50' : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setAuthMode('paciente')}
-            >
-              Paciente
-            </button>
+      {/* Right side - Login form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          {/* Mobile logo header */}
+          <div className="lg:hidden flex flex-col items-center gap-4 mb-8">
+            <img
+              src="/images/logo-itvh.webp"
+              alt="ITVH"
+              className="h-16 w-auto"
+            />
+            <img
+              src="/images/logo-tecnm.png"
+              alt="TecNM"
+              className="h-12 w-auto"
+            />
           </div>
 
-          <div className="p-8 sm:p-10">
-            {getErrorMessage() && (
-              <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
-                {getErrorMessage()}
-              </div>
-            )}
+          {/* Login card */}
+          <div className="bg-white rounded-2xl shadow-[0_25px_70px_-10px_rgba(0,0,0,0.35)] overflow-hidden">
+            <div className="px-8 pt-8 pb-4">
+              <h2 className="text-xl font-bold text-[#1A365D] mb-2">
+                INICIAR SESIÓN
+              </h2>
+              <div className="h-1 w-16 bg-[#1A365D] rounded-full"></div>
+            </div>
 
-            {authMode === 'staff' ? (
-              <form onSubmit={handleSubmitStaff(onSubmitStaff)} className="space-y-5">
+            <div className="p-8">
+              {errorMessage && (
+                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
+                  {errorMessage}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <Input
                   label="Usuario"
-                  error={errorsStaff.username?.message}
-                  {...registerStaff('username')}
+                  error={errors.username?.message}
+                  {...register('username')}
                 />
                 <Input
                   label="Contraseña"
                   type="password"
-                  error={errorsStaff.password?.message}
-                  {...registerStaff('password')}
+                  error={errors.password?.message}
+                  {...register('password')}
                 />
-                <Button type="submit" className="w-full h-12 text-base font-semibold mt-8" isLoading={isPending}>
-                  Iniciar Sesión
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base font-semibold mt-6"
+                  isLoading={loginMutation.isPending}
+                >
+                  INGRESAR
                 </Button>
               </form>
-            ) : (
-              <form onSubmit={handleSubmitPaciente(onSubmitPaciente)} className="space-y-5">
-                <Input
-                  label="Número de Control"
-                  placeholder="Ej. 18320000"
-                  error={errorsPaciente.numero_control?.message}
-                  {...registerPaciente('numero_control')}
-                />
-                <Input
-                  label="Fecha de Nacimiento"
-                  type="date"
-                  error={errorsPaciente.fecha_nacimiento?.message}
-                  {...registerPaciente('fecha_nacimiento')}
-                />
-                <Button type="submit" className="w-full h-12 text-base font-semibold mt-8" isLoading={isPending}>
-                  Entrar al Portal
-                </Button>
-              </form>
-            )}
-            
+            </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <p className="text-center text-primary-200/80 text-sm mt-8 font-medium">
-          &copy; {new Date().getFullYear()} Instituto Tecnológico de Villahermosa
-        </p>
       </div>
     </div>
   );

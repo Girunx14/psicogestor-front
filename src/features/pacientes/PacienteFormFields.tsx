@@ -22,6 +22,7 @@ const pacienteSchema = z.object({
   nombre_padre: z.string(),
   nombre_madre: z.string(),
   padres_separados: z.union([z.boolean(), z.string()]).transform((v) => v === 'true' || v === true),
+  anios_padres_separados: z.union([z.number(), z.string()]).transform((v) => v === '' || v === '0' ? null : Number(v)).optional(),
 });
 
 type PacienteSchemaType = z.infer<typeof pacienteSchema>;
@@ -67,6 +68,7 @@ export default function PacienteFormFields({
       nombre_padre: '',
       nombre_madre: '',
       padres_separados: false,
+      anios_padres_separados: null,
       ...defaultValues,
     },
   });
@@ -228,6 +230,18 @@ export default function PacienteFormFields({
               {...register('padres_separados')}
             />
           </div>
+          {watch('padres_separados') && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <Input
+                label="¿Cuántos años llevan separados?"
+                type="number"
+                min="0"
+                error={errors.anios_padres_separados?.message}
+                {...register('anios_padres_separados')}
+                placeholder="Ej: 3"
+              />
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <Input label="Nombre del Padre" error={errors.nombre_padre?.message} {...register('nombre_padre')} />
             <Input label="Nombre de la Madre" error={errors.nombre_madre?.message} {...register('nombre_madre')} />

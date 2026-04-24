@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Users, Calendar, BarChart3, LogOut, Menu, X, Brain, Clock, UserCog, LayoutDashboard, Home } from 'lucide-react';
+import { Users, Calendar, BarChart3, LogOut, X, Brain, Clock, UserCog, Home } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { clsx } from 'clsx';
@@ -9,13 +9,13 @@ export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const isAdmin = useAuthStore((s) => s.isAdmin);
   const navigate = useNavigate();
-  const { sidebarOpen, toggleSidebar, closeSidebar } = useUIStore();
+  const { sidebarOpen, closeSidebar } = useUIStore();
 
   const isAdminUser = isAdmin();
 
   const navItems = [
     { to: '/bienvenida', label: 'Inicio', icon: Home, visible: true },
-    { to: '/pacientes', label: 'Pacientes', icon: Users, visible: true },
+    { to: '/pacientes', label: 'Usuarios', icon: Users, visible: true },
     { to: '/citas', label: 'Citas', icon: Calendar, visible: true },
     { to: '/horarios', label: 'Horarios', icon: Clock, visible: true },
     { to: '/estadisticas', label: 'Estadísticas', icon: BarChart3, visible: true },
@@ -29,16 +29,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile toggle */}
-      <button
-        onClick={toggleSidebar}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white border border-secondary-200 text-secondary-600 hover:bg-secondary-50"
-        aria-label="Toggle menu"
-      >
-        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
-
-      {/* Mobile overlay */}
+      {/* Mobile overlay - Only for small screens */}
       {sidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/30 z-40"
@@ -49,16 +40,15 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed lg:static inset-y-0 left-0 z-40',
+          'fixed inset-y-0 left-0 z-40',
           'w-64 bg-white border-r border-secondary-100',
           'flex flex-col',
-          'transform transition-transform duration-200 ease-in-out',
-          'lg:transform-none',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          'transform transition-transform duration-300 ease-in-out',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         {/* Header / Branding */}
-        <div className="px-6 py-6 border-b border-secondary-100">
+        <div className="px-6 py-6 border-b border-secondary-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shrink-0">
               <Brain size={20} className="text-white" />
@@ -68,6 +58,9 @@ export default function Sidebar() {
               <p className="text-[11px] text-secondary-400 leading-tight">ITVH</p>
             </div>
           </div>
+          <button onClick={closeSidebar} className="lg:hidden p-1 text-secondary-400 hover:text-gray-900 rounded-md">
+            <X size={20} />
+          </button>
         </div>
 
         {/* Navigation */}
