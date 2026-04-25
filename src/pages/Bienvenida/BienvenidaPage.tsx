@@ -29,7 +29,11 @@ export default function BienvenidaPage() {
     
     return citas
       .filter((c) => c.fecha === today)
-      .sort((a, b) => a.hora.localeCompare(b.hora))
+      .sort((a, b) => {
+        const timeA = a.hora || '';
+        const timeB = b.hora || '';
+        return timeA.localeCompare(timeB);
+      })
       .map((cita) => {
         const paciente = patients.find((p) => p.id === cita.paciente_id);
         return {
@@ -159,10 +163,16 @@ export default function BienvenidaPage() {
                   {/* Time Section */}
                   <div className="flex flex-col items-center justify-center min-w-[80px] border-r border-gray-200 pr-6">
                     <span className="text-2xl font-bold text-[#1B396A]">
-                      {cita.hora.slice(0, 5)}
+                      {(() => {
+                         const h = cita.hora || '00:00:00';
+                         return h.slice(0, 5);
+                      })()}
                     </span>
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      {parseInt(cita.hora.split(':')[0]) >= 12 ? 'PM' : 'AM'}
+                      {(() => {
+                         const h = cita.hora || '00:00:00';
+                         return parseInt(h.split(':')[0]) >= 12 ? 'PM' : 'AM';
+                      })()}
                     </span>
                   </div>
 
