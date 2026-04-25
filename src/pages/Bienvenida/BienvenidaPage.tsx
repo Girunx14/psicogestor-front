@@ -29,7 +29,7 @@ export default function BienvenidaPage() {
     
     return citas
       .filter((c) => c.fecha === today)
-      .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio))
+      .sort((a, b) => a.hora.localeCompare(b.hora))
       .map((cita) => {
         const paciente = patients.find((p) => p.id === cita.paciente_id);
         return {
@@ -159,10 +159,10 @@ export default function BienvenidaPage() {
                   {/* Time Section */}
                   <div className="flex flex-col items-center justify-center min-w-[80px] border-r border-gray-200 pr-6">
                     <span className="text-2xl font-bold text-[#1B396A]">
-                      {cita.hora_inicio.slice(0, 5)}
+                      {cita.hora.slice(0, 5)}
                     </span>
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      {parseInt(cita.hora_inicio.split(':')[0]) >= 12 ? 'PM' : 'AM'}
+                      {parseInt(cita.hora.split(':')[0]) >= 12 ? 'PM' : 'AM'}
                     </span>
                   </div>
 
@@ -205,8 +205,9 @@ export default function BienvenidaPage() {
         </div>
 
         {/* Bottom Navigation Cards (Alternative to just the agenda) */}
+        {user?.rol?.nombre !== 'desarrollo_academico' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          <button 
+          <button
             onClick={() => navigate('/pacientes')}
             className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
           >
@@ -217,7 +218,7 @@ export default function BienvenidaPage() {
             <p className="text-xs text-gray-400">Gestión de pacientes y notas</p>
           </button>
 
-          <button 
+          <button
             onClick={() => navigate('/estadisticas')}
             className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
           >
@@ -228,7 +229,7 @@ export default function BienvenidaPage() {
             <p className="text-xs text-gray-400">Análisis y estadísticas mensuales</p>
           </button>
 
-          <button 
+          <button
             onClick={() => navigate('/horarios')}
             className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
           >
@@ -239,6 +240,7 @@ export default function BienvenidaPage() {
             <p className="text-xs text-gray-400">Gestión de horarios y perfiles</p>
           </button>
         </div>
+        )}
       </main>
     </div>
   );

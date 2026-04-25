@@ -15,10 +15,10 @@ export default function Sidebar() {
 
   const navItems = [
     { to: '/bienvenida', label: 'Inicio', icon: Home, visible: true },
-    { to: '/pacientes', label: 'Usuarios', icon: Users, visible: true },
-    { to: '/citas', label: 'Citas', icon: Calendar, visible: true },
-    { to: '/horarios', label: 'Horarios', icon: Clock, visible: true },
-    { to: '/estadisticas', label: 'Estadísticas', icon: BarChart3, visible: true },
+    { to: '/citas', label: 'Agenda', icon: Calendar, visible: true },
+    { to: '/horarios', label: 'Horarios', icon: Clock, visible: user?.rol?.nombre === 'desarrollo_academico' || user?.rol?.nombre !== 'paciente' },
+    { to: '/pacientes', label: 'Usuarios', icon: Users, visible: user?.rol?.nombre !== 'desarrollo_academico' && user?.rol?.nombre !== 'paciente' },
+    { to: '/estadisticas', label: 'Estadísticas', icon: BarChart3, visible: user?.rol?.nombre !== 'desarrollo_academico' && user?.rol?.nombre !== 'paciente' },
     { to: '/usuarios', label: 'Usuarios', icon: UserCog, visible: isAdminUser },
   ];
 

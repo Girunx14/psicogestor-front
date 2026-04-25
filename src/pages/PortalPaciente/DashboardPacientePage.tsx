@@ -33,7 +33,7 @@ export default function DashboardPacientePage() {
     reset,
     formState: { errors },
   } = useForm<CitaSchemaType>({
-    resolver: zodResolver(citaSchema),
+    resolver: zodResolver(citaSchema) as any,
     defaultValues: {
       horario_id: 0,
       motivo: '',
@@ -95,7 +95,7 @@ export default function DashboardPacientePage() {
                   <div>
                     <p className="font-semibold text-gray-900 text-lg">{cita.fecha}</p>
                     <p className="text-secondary-600 font-medium">
-                      {cita.hora_inicio?.slice(0, 5)} - {cita.hora_fin?.slice(0, 5)} hrs
+                      {cita.hora?.slice(0, 5)} hrs
                     </p>
                     <p className="text-sm text-secondary-500 mt-1 bg-white inline-block px-2 py-0.5 rounded-md border border-secondary-200">
                       Modalidad: {cita.tipo}
@@ -183,7 +183,7 @@ export default function DashboardPacientePage() {
               .filter(h => h.tipo === modalidad)
               .map((h) => ({
                 value: h.id,
-                label: `${h.fecha} — ${h.hora_inicio.slice(0, 5)} a ${h.hora_fin.slice(0, 5)} (${h.tipo})`,
+                label: `${h.fecha} — ${h.hora.slice(0, 5)} (${h.tipo})`,
               }))}
             {...register('horario_id')}
           />

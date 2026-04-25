@@ -15,8 +15,7 @@ import { useHorarios, useCreateHorario, useDeleteHorario } from '@/hooks/useHora
 
 const horarioSchema = z.object({
   fecha: z.string().min(1, 'La fecha es requerida'),
-  hora_inicio: z.string().min(1, 'La hora de inicio es requerida'),
-  hora_fin: z.string().min(1, 'La hora de fin es requerida'),
+  hora: z.string().min(1, 'La hora es requerida'),
   tipo: z.enum(['presencial', 'virtual']),
 });
 
@@ -38,24 +37,31 @@ export default function HorariosPage() {
     resolver: zodResolver(horarioSchema) as any,
     defaultValues: {
       fecha: '',
-      hora_inicio: '',
-      hora_fin: '',
+      hora: '',
       tipo: 'presencial',
     },
   });
 
   const onSubmit = (data: HorarioSchemaType) => {
+    console.log('Submitting horario:', {
+      fecha: data.fecha,
+      hora: data.hora + ':00',
+      tipo: data.tipo,
+    });
     createMutation.mutate(
       {
         fecha: data.fecha,
-        hora_inicio: data.hora_inicio + ':00',
-        hora_fin: data.hora_fin + ':00',
+        hora: data.hora + ':00',
         tipo: data.tipo,
       },
       {
         onSuccess: () => {
           setModalOpen(false);
           reset();
+        },
+        onError: (err) => {
+          console.error('Error al crear horario:', err);
+          alert('Error al crear horario: ' + (err?.message || JSON.stringify(err)));
         },
       },
     );
@@ -116,12 +122,12 @@ export default function HorariosPage() {
                 </h3>
                 <div className="space-y-2">
                   {byDate[fecha]
-                    .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio))
+                    .sort((a, b) => a.hora.localeCompare(b.hora))
                     .map((h) => (
                       <div key={h.id} className="flex items-center gap-3 p-3 rounded-lg bg-surface">
                         <div className="flex-1 flex items-center gap-3">
                           <span className="text-sm font-medium text-gray-900">
-                            {h.hora_inicio.slice(0, 5)} — {h.hora_fin.slice(0, 5)}
+                            {h.hora.slice(0, 5)}
                           </span>
                           <span className="text-xs text-secondary-400 flex items-center gap-1">
                             {h.tipo === 'virtual' ? <Video size={12} /> : <MapPin size={12} />}
@@ -153,8 +159,7 @@ export default function HorariosPage() {
           <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
             <Input label="Fecha" type="date" error={errors.fecha?.message} {...register('fecha')} />
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Hora inicio" type="time" error={errors.hora_inicio?.message} {...register('hora_inicio')} />
-              <Input label="Hora fin" type="time" error={errors.hora_fin?.message} {...register('hora_fin')} />
+              <Input label="Hora" type="time" error={errors.hora?.message} {...register('hora')} />
             </div>
             <Select
               label="Tipo"
@@ -169,7 +174,7 @@ export default function HorariosPage() {
               <Button variant="outline" type="button" onClick={() => setModalOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" isLoading={createMutation.isPending}>
+              <Button type="submit" isLoading={createMutation.isPending} disabled={createMutation.isPending}>
                 Crear Horario
               </Button>
             </div>

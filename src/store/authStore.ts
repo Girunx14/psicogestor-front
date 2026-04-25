@@ -52,14 +52,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isPsicologo: () => {
     const { user } = get();
     if (!user) return false;
-    // Admin hereda permisos de psicólogo
-    return user.rol?.nombre === 'psicologo' || user.rol?.nombre === 'administrador';
+    return user.rol?.nombre === 'psicologo' || user.rol?.nombre === 'administrador' || user.rol?.nombre === 'desarrollo_academico';
   },
 
   hasRole: (role: UserRole) => {
     const { user } = get();
     if (!user) return false;
     if (user.rol?.nombre === 'administrador') return true;
+    if (role === 'psicologo') {
+      return user.rol?.nombre === 'psicologo' || user.rol?.nombre === 'desarrollo_academico' || user.rol?.nombre === 'asistente';
+    }
     return user.rol?.nombre === role;
   },
 }));

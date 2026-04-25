@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList } from 'lucide-react';
+import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, RefreshCw } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -8,6 +8,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Modal from '@/components/ui/Modal';
 import { usePaciente, useDeletePaciente } from '@/hooks/usePacientes';
 import { useNotasPaciente } from '@/hooks/useNotas';
+import { useResumenPaciente, useGenerarResumen } from '@/hooks/useResumenes';
 
 export default function PacienteDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -18,10 +19,31 @@ export default function PacienteDetallePage() {
   const deleteMutation = useDeletePaciente();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const { data: resumen } = useResumenPaciente(pacienteId);
+  const generarResumenMutation = useGenerarResumen();
+  const [showResumenModal, setShowResumenModal] = useState(false);
+
+  const handleGenerarResumen = () => {
+    generarResumenMutation.mutate(pacienteId, {
+      onSuccess: () => setShowResumenModal(true),
+    });
+  };
+
+  const parseLocalDate = (dateStr: string) => {
+    if (!dateStr) return new Date('');
+    const [y, m, d] = dateStr.split('-');
+    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+  };
+
+  const formatLocalDate = (dateStr: string) => {
+    const date = parseLocalDate(dateStr);
+    return date.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+  };
+
   const edad = (() => {
     if (!paciente?.fecha_nacimiento) return null;
     const now = new Date();
-    const birth = new Date(paciente.fecha_nacimiento);
+    const birth = parseLocalDate(paciente.fecha_nacimiento);
     let age = now.getFullYear() - birth.getFullYear();
     const m = now.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
@@ -72,7 +94,7 @@ export default function PacienteDetallePage() {
       />
       <main className="flex-1 p-6 lg:p-8 space-y-6">
         {/* Actions */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <Button variant="outline" onClick={() => navigate(`/pacientes/${id}/editar`)}>
             <Edit size={16} />
             Editar Datos
@@ -80,6 +102,14 @@ export default function PacienteDetallePage() {
           <Button onClick={() => navigate(`/pacientes/${id}/notas/nueva`)}>
             <Plus size={16} />
             Nueva Nota
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setShowResumenModal(true)}
+            className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:bg-purple-50"
+          >
+            <Sparkles size={16} />
+            Resumen IA
           </Button>
           <Button variant="outline" className="ml-auto text-red-600 border-red-200 hover:bg-red-50" onClick={() => setShowDeleteModal(true)}>
             <Trash2 size={16} />
@@ -100,7 +130,7 @@ export default function PacienteDetallePage() {
             <div className="p-5">
               <dl className="space-y-0 text-sm">
                 <Row label="Nombre completo" value={`${paciente.nombres} ${paciente.apellido_paterno} ${paciente.apellido_materno}`} />
-                <Row label="Fecha de nacimiento" value={new Date(paciente.fecha_nacimiento).toLocaleDateString('es-MX')} />
+                <Row label="Fecha de nacimiento" value={formatLocalDate(paciente.fecha_nacimiento)} />
                 <Row label="Edad" value={edad !== null ? `${edad} años` : '—'} />
                 <Row label="Sexo" value={paciente.sexo === 'M' ? 'Masculino' : paciente.sexo === 'F' ? 'Femenino' : paciente.sexo} />
               </dl>
@@ -172,7 +202,7 @@ export default function PacienteDetallePage() {
             </div>
             <div className="p-5">
               <dl className="space-y-0 text-sm">
-                <Row label="Fecha de registro" value={new Date(paciente.fecha_registro).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })} />
+                <Row label="Fecha de registro" value={formatLocalDate(paciente.fecha_registro.split('T')[0])} />
               </dl>
             </div>
           </section>
@@ -229,6 +259,80 @@ export default function PacienteDetallePage() {
           </div>
         </section>
       </main>
+
+      {/* Resumen IA modal */}
+      <Modal
+        isOpen={showResumenModal}
+        onClose={() => setShowResumenModal(false)}
+        title="Resumen Clínico con IA"
+        size="lg"
+      >
+        <div className="space-y-4">
+          {notas.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FileText size={24} className="text-purple-300" />
+              </div>
+              <p className="text-gray-500 mb-4">No hay suficientes sesiones para generar un resumen.</p>
+              <p className="text-sm text-gray-400">Registra al menos una nota de evolución para que la IA pueda analizar el historial del paciente.</p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-100">
+                <div className="flex items-center gap-3">
+                  <Sparkles size={20} className="text-purple-600" />
+                  <div>
+                    <p className="font-semibold text-gray-900">Resumen generado por IA</p>
+                    <p className="text-xs text-gray-500">Basado en {notas.length} sesión{notas.length !== 1 ? 'es' : ''} registrada{notas.length !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  isLoading={generarResumenMutation.isPending}
+                  onClick={handleGenerarResumen}
+                >
+                  <RefreshCw size={14} />
+                  Regenerar
+                </Button>
+              </div>
+
+              {resumen?.contenido_resumen ? (
+                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                  <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
+                    {resumen.contenido_resumen}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-4 text-right">
+                    Última actualización: {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Sparkles size={24} className="text-purple-300" />
+                  </div>
+                  <p className="text-gray-600 font-medium mb-2">Aún no hay resumen generado</p>
+                  <p className="text-sm text-gray-400 mb-6">La IA analizará todas las sesiones registradas y生成ará un resumen clínico.</p>
+                  <Button
+                    isLoading={generarResumenMutation.isPending}
+                    onClick={handleGenerarResumen}
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                  >
+                    <Sparkles size={16} />
+                    Generar Resumen con IA
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </Modal>
 
       {/* Delete confirmation modal */}
       <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Eliminar Paciente" size="sm">

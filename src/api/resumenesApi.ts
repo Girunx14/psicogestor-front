@@ -8,7 +8,7 @@ export const resumenesApi = {
   },
 
   generate: async (pacienteId: string): Promise<ResumenPaciente> => {
-    const response = await axiosClient.post(`/resumenes/paciente/${pacienteId}`);
+    const response = await axiosClient.post(`/resumenes/paciente/${pacienteId}/ai-generar`);
     return response.data;
   },
 };

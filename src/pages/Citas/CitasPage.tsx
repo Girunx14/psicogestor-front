@@ -78,13 +78,13 @@ export default function CitasPage() {
 
   const goToToday = () => setCurrentWeek(getWeekStart(new Date()));
 
-  // Group appointments by day/hour using the enriched fecha/hora_inicio fields
+  // Group appointments by day/hour using the enriched fecha/hora fields
   const citasBySlot = useMemo(() => {
     const map: Record<string, Cita[]> = {};
     const citasList = Array.isArray(citas) ? citas : [];
     citasList.forEach((c) => {
-      if (!c.fecha || !c.hora_inicio) return;
-      const hour = parseInt(c.hora_inicio.split(':')[0], 10);
+      if (!c.fecha || !c.hora) return;
+      const hour = parseInt(c.hora.split(':')[0], 10);
       const key = `${c.fecha}-${hour}`;
       if (!map[key]) map[key] = [];
       map[key].push(c);
@@ -211,7 +211,7 @@ export default function CitasPage() {
                                   </p>
                                   <p className="text-primary-400 flex items-center gap-1 mt-0.5">
                                     {cita.tipo === 'virtual' ? <Video size={10} /> : <MapPin size={10} />}
-                                    {cita.hora_inicio?.slice(0, 5)} - {cita.hora_fin?.slice(0, 5)} · {cita.tipo}
+                                    {cita.hora?.slice(0, 5)} · {cita.tipo}
                                   </p>
                                   {cita.motivo && (
                                     <p className="text-primary-300 truncate mt-0.5">{cita.motivo}</p>
@@ -285,7 +285,7 @@ export default function CitasPage() {
               error={errors.horario_id?.message}
               options={availableHorarios.map((h) => ({
                 value: h.id,
-                label: `${h.fecha} — ${h.hora_inicio.slice(0, 5)} a ${h.hora_fin.slice(0, 5)} (${h.tipo})`,
+                label: `${h.fecha} — ${h.hora.slice(0, 5)} (${h.tipo})`,
               }))}
               {...register('horario_id')}
             />

@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { authApi } from '@/api/authApi';
 import { usuariosApi } from '@/api/usuariosApi';
 import { useAuthStore } from '@/store/authStore';
-import type { LoginRequest, User } from '@/types';
+import type { LoginRequest, User, UserRole } from '@/types';
 
 export function useLogin() {
   const login = useAuthStore((s) => s.login);
@@ -20,18 +20,27 @@ export function useLogin() {
       const userId = parseInt(payloadDecoded.sub, 10);
 
       // 4. Try to fetch full user info, fallback to JWT payload if unauthorized (e.g., non-admin)
+      const rolMap: Record<string, number> = {
+        administrador: 1,
+        psicologo: 2,
+        asistente: 3,
+        desarrollo_academico: 4,
+        paciente: 5,
+      };
       let user: User;
       try {
         user = await usuariosApi.getById(userId);
       } catch {
+        const rolNombre = payloadDecoded.rol as string;
+        const rolId = rolMap[rolNombre] || 2;
         user = {
           id: userId,
           username: payloadDecoded.username,
-          rol_id: payloadDecoded.rol === 'administrador' ? 1 : 2,
+          rol_id: rolId,
           creado_en: new Date().toISOString(),
           rol: {
-            id: payloadDecoded.rol === 'administrador' ? 1 : 2,
-            nombre: payloadDecoded.rol,
+            id: rolId,
+            nombre: rolNombre as UserRole,
           },
         };
       }

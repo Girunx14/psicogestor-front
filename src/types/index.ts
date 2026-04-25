@@ -2,7 +2,7 @@
 // Domain Types — Aligned with Backend API
 // ──────────────────────────────────────────────────
 
-export type UserRole = 'administrador' | 'psicologo' | 'paciente';
+export type UserRole = 'administrador' | 'psicologo' | 'paciente' | 'desarrollo_academico' | 'asistente';
 
 export interface Rol {
   id: number;
@@ -62,6 +62,7 @@ export interface PacienteListItem {
   semestre: number;
   sexo: string;
   fecha_registro: string; // ISO datetime
+  fecha_nacimiento: string | null;
 }
 
 /** Paciente detalle completo */
@@ -91,7 +92,7 @@ export interface Paciente {
 export interface PacienteCreate {
   nombres: string;
   apellido_paterno: string;
-  apellido_materno: string;
+  apellido_materno?: string;
   fecha_nacimiento: string;
   sexo: string;
   carrera_id: number;
@@ -101,10 +102,10 @@ export interface PacienteCreate {
   localidad: string;
   municipio: string;
   con_quien_vive: string;
-  nombre_padre: string;
-  nombre_madre: string;
+  nombre_padre?: string;
+  nombre_madre?: string;
   padres_separados: boolean;
-  anios_padres_separados: number | null;
+  anios_padres_separados?: number | null;
 }
 
 export type PacienteUpdate = Partial<PacienteCreate>;
@@ -119,8 +120,7 @@ export interface Horario {
   id: number;
   psicologo_id: number;
   fecha: string; // ISO date
-  hora_inicio: string; // HH:MM:SS
-  hora_fin: string; // HH:MM:SS
+  hora: string; // HH:MM:SS
   tipo: TipoHorario;
   disponible: boolean;
   creado_en: string;
@@ -128,8 +128,7 @@ export interface Horario {
 
 export interface HorarioCreate {
   fecha: string;
-  hora_inicio: string;
-  hora_fin: string;
+  hora: string;
   tipo: TipoHorario;
 }
 
@@ -157,8 +156,7 @@ export interface Cita {
   actualizado_en: string;
   // Enriched from horario
   fecha: string;
-  hora_inicio: string;
-  hora_fin: string;
+  hora: string;
 }
 
 export interface CitaCreate {

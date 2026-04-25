@@ -9,7 +9,7 @@ import type { PacienteCreate } from '@/types';
 const pacienteSchema = z.object({
   nombres: z.string().min(1, 'El nombre es requerido'),
   apellido_paterno: z.string().min(1, 'El apellido paterno es requerido'),
-  apellido_materno: z.string().min(1, 'El apellido materno es requerido'),
+  apellido_materno: z.string().optional().default(''),
   fecha_nacimiento: z.string().min(1, 'La fecha de nacimiento es requerida'),
   sexo: z.string().min(1, 'El sexo es requerido'),
   carrera_id: z.coerce.number().min(1, 'La carrera es requerida'),
@@ -19,10 +19,10 @@ const pacienteSchema = z.object({
   localidad: z.string().min(1, 'La localidad es requerida'),
   municipio: z.string().min(1, 'El municipio es requerido'),
   con_quien_vive: z.string().min(1, 'Este campo es requerido'),
-  nombre_padre: z.string(),
-  nombre_madre: z.string(),
-  padres_separados: z.union([z.boolean(), z.string()]).transform((v) => v === 'true' || v === true),
-  anios_padres_separados: z.union([z.number(), z.string()]).transform((v) => v === '' || v === '0' ? null : Number(v)).optional(),
+  nombre_padre: z.string().optional().default(''),
+  nombre_madre: z.string().optional().default(''),
+  padres_separados: z.preprocess((val) => val === 'true' || val === true, z.boolean()),
+  anios_padres_separados: z.preprocess((val) => val === '' || val === undefined ? null : Number(val), z.number().nullable().optional()),
 });
 
 type PacienteSchemaType = z.infer<typeof pacienteSchema>;
@@ -76,9 +76,15 @@ export default function PacienteFormFields({
   // Auto-calculate age
   const fechaNacimiento = watch('fecha_nacimiento');
   const edad = fechaNacimiento
-    ? Math.floor(
-        (Date.now() - new Date(fechaNacimiento).getTime()) / (365.25 * 24 * 60 * 60 * 1000),
-      )
+    ? (() => {
+        const [y, m, d] = fechaNacimiento.split('-');
+        const birth = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+        const now = new Date();
+        let age = now.getFullYear() - birth.getFullYear();
+        const mo = now.getMonth() - birth.getMonth();
+        if (mo < 0 || (mo === 0 && now.getDate() < birth.getDate())) age--;
+        return age;
+      })()
     : null;
 
   if (catalogosLoading) {
@@ -230,7 +236,7 @@ export default function PacienteFormFields({
               {...register('padres_separados')}
             />
           </div>
-          {watch('padres_separados') && (
+          {String(watch('padres_separados')) === 'true' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <Input
                 label="¿Cuántos años llevan separados?"

@@ -88,7 +88,7 @@ export default function PacientesListPage() {
       {/* Custom Header */}
       <div className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 px-6 py-8 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex items-start gap-4">
-          <button 
+          <button
             onClick={toggleSidebar}
             className="p-2 mt-1 text-gray-400 hover:text-[#1A365D] hover:bg-gray-100 rounded-lg transition-all"
             title="Alternar Menú"
@@ -96,10 +96,7 @@ export default function PacientesListPage() {
             <Menu size={24} />
           </button>
           <div>
-            <h1 className="text-3xl font-extrabold text-[#1A365D] tracking-tight">Usuarios del Servicio de Psicología del ITV</h1>
-            <p className="text-sm text-gray-500 mt-1 max-w-lg">
-              Gestión del padrón de alumnos atendidos por el servicio psicopedagógico del ITVH.
-            </p>
+            <h1 className="text-3xl font-extrabold text-[#1A365D] tracking-tight">Usuarios del Servicio de Psicología del ITVH</h1>
           </div>
         </div>
         <Button onClick={() => navigate('/pacientes/nuevo')} className="bg-[#1A365D] hover:bg-[#122643] shrink-0 shadow-md">

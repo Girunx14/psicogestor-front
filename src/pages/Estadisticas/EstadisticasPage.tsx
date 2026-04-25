@@ -18,6 +18,21 @@ export default function EstadisticasPage() {
     const pList = pacientesList as any[];
     const total = pList.length;
 
+    const parseLocalDate = (dateStr: string) => {
+      if (!dateStr) return new Date(0);
+      const [y, m, d] = dateStr.split('-');
+      return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    };
+
+    const getAge = (dateStr: string) => {
+      const birth = parseLocalDate(dateStr);
+      const now = new Date();
+      let age = now.getFullYear() - birth.getFullYear();
+      const mo = now.getMonth() - birth.getMonth();
+      if (mo < 0 || (mo === 0 && now.getDate() < birth.getDate())) age--;
+      return age;
+    };
+
     // 1. Padres Separados
     const divorciados = pList.filter((p) => p.padres_separados === true).length;
     const porcentajeDivorciados = ((divorciados / total) * 100).toFixed(1);
@@ -34,7 +49,7 @@ export default function EstadisticasPage() {
     const semMap: Record<string, number> = {};
     pList.forEach((p) => {
       if (p.semestre) {
-        const s = `${p.semestre}°-${p.semestre + 1}°`; // Para agrupar o formato similar
+        const s = `${p.semestre}°`;
         semMap[s] = (semMap[s] || 0) + 1;
       }
     });
@@ -46,7 +61,7 @@ export default function EstadisticasPage() {
     let ageCount = 0;
     pList.forEach((p) => {
       if (p.fecha_nacimiento) {
-        const age = Math.floor((Date.now() - new Date(p.fecha_nacimiento).getTime()) / 31557600000);
+        const age = getAge(p.fecha_nacimiento);
         if (age <= 20) edadGrupos['18-20']++;
         else if (age <= 23) edadGrupos['21-23']++;
         else if (age <= 26) edadGrupos['24-26']++;
@@ -73,7 +88,7 @@ export default function EstadisticasPage() {
       .map(key => ({ name: key, val: carreraMap[key], pct: Math.round((carreraMap[key] / total) * 100) }))
       .sort((a, b) => b.val - a.val);
 
-    // Mes actual pacientes resgistrados
+    // Mes actual pacientes registrados
     const currMonth = new Date().getMonth();
     const pacientesMes = pList.filter(p => new Date(p.fecha_registro).getMonth() === currMonth).length;
 
