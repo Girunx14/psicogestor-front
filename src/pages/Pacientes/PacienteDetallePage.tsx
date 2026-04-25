@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, RefreshCw } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Badge from '@/components/ui/Badge';
@@ -102,14 +103,6 @@ export default function PacienteDetallePage() {
           <Button onClick={() => navigate(`/pacientes/${id}/notas/nueva`)}>
             <Plus size={16} />
             Nueva Nota
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowResumenModal(true)}
-            className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:bg-purple-50"
-          >
-            <Sparkles size={16} />
-            Resumen IA
           </Button>
           <Button variant="outline" className="ml-auto text-red-600 border-red-200 hover:bg-red-50" onClick={() => setShowDeleteModal(true)}>
             <Trash2 size={16} />
@@ -217,7 +210,18 @@ export default function PacienteDetallePage() {
               </span>
               <h3 className="text-sm font-semibold text-gray-900">Notas de Evolución</h3>
             </div>
-            <span className="text-xs text-secondary-400 bg-secondary-50 px-2 py-1 rounded-full">{notasData?.total ?? 0} notas</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowResumenModal(true)}
+                className="text-xs bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:bg-purple-50"
+              >
+                <Sparkles size={14} />
+                Resumen IA
+              </Button>
+              <span className="text-xs text-secondary-400 bg-secondary-50 px-2 py-1 rounded-full">{notasData?.total ?? 0} notas</span>
+            </div>
           </div>
 
           <div className="p-5">
@@ -315,19 +319,31 @@ export default function PacienteDetallePage() {
               </div>
 
               {resumen?.contenido_resumen ? (
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                  <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
-                    {resumen.contenido_resumen}
+                <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-6 border border-gray-200 overflow-y-auto max-h-[50vh]">
+                  <div className="resumen-markdown text-sm text-gray-700">
+                    <ReactMarkdown>{resumen.contenido_resumen}</ReactMarkdown>
                   </div>
-                  <p className="text-xs text-gray-400 mt-4 text-right">
-                    Última actualización: {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+                  <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                    <p className="text-xs text-gray-400">
+                      Generado: {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      isLoading={generarResumenMutation.isPending}
+                      onClick={handleGenerarResumen}
+                      className="text-xs text-purple-600 hover:text-purple-700"
+                    >
+                      <RefreshCw size={12} className="mr-1" />
+                      Regenerar
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">
