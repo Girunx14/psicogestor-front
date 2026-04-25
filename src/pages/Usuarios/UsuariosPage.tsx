@@ -62,8 +62,8 @@ export default function UsuariosPage() {
       key: 'rol',
       header: 'Rol',
       render: (u: User) => (
-        <Badge variant={u.rol?.nombre === 'administrador' ? 'info' : 'success'}>
-          {u.rol?.nombre || '—'}
+        <Badge variant={u.rol?.nombre === 'administrador' ? 'info' : u.rol?.nombre === 'psicologo' ? 'success' : 'warning'}>
+          {u.rol?.nombre === 'desarrollo_academico' ? 'Desarrollo Académico' : u.rol?.nombre === 'asistente' ? 'Asistente' : u.rol?.nombre || '—'}
         </Badge>
       ),
     },
@@ -132,6 +132,8 @@ export default function UsuariosPage() {
               options={[
                 { value: 1, label: 'Administrador' },
                 { value: 2, label: 'Psicólogo' },
+                { value: 3, label: 'Asistente' },
+                { value: 4, label: 'Desarrollo Académico' },
               ]}
               {...register('rol_id')}
             />
