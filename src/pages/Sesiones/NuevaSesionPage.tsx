@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,7 +9,8 @@ import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import Button from '@/components/ui/Button';
 import VoiceDictation from '@/features/sesiones/VoiceDictation';
-import { useCreateNota, useNotasPaciente } from '@/hooks/useNotas';
+import { useCreateNota, useNotasPaciente, useUpdateNota } from '@/hooks/useNotas';
+import type { NotaEvolucion } from '@/types';
 
 const notaSchema = z.object({
   numero_sesion: z.coerce.number().min(1, 'El número de sesión es requerido'),
@@ -24,8 +25,12 @@ type NotaSchemaType = z.infer<typeof notaSchema>;
 export default function NuevaSesionPage() {
   const { id: pacienteId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const notaId = searchParams.get('nota_id');
+  const viewOnly = searchParams.get('view') === 'true';
 
   const { data: notasData } = useNotasPaciente(pacienteId!);
+  const updateNotaMutation = useUpdateNota(Number(notaId));
   const totalNotas = notasData?.total ?? 0;
   const siguienteSesion = totalNotas + 1;
 
@@ -37,6 +42,7 @@ export default function NuevaSesionPage() {
     watch,
     setValue,
     getValues,
+    reset,
     formState: { errors },
   } = useForm<NotaSchemaType>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,6 +55,22 @@ export default function NuevaSesionPage() {
       transcripcion_entrevista: '',
     },
   });
+
+  // Load existing nota data when nota_id is present
+  useEffect(() => {
+    if (!notaId || !notasData?.items?.length) return;
+
+    const nota = notasData.items.find((n: NotaEvolucion) => n.id === Number(notaId));
+    if (nota) {
+      reset({
+        numero_sesion: nota.numero_sesion,
+        impresion_diagnostica: nota.impresion_diagnostica || '',
+        fecha_hora: nota.fecha_hora.split('T')[0],
+        nota_texto: nota.nota_texto || '',
+        transcripcion_entrevista: nota.transcripcion_entrevista || '',
+      });
+    }
+  }, [notaId, notasData, reset]);
 
   // Update session number when notas data loads
   if (getValues('numero_sesion') === 1 && totalNotas > 0) {
@@ -70,26 +92,45 @@ export default function NuevaSesionPage() {
 
   // Submit handler
   const onSubmit = async (data: NotaSchemaType) => {
-    createNotaMutation.mutate(
-      {
-        paciente_id: pacienteId!,
-        numero_sesion: data.numero_sesion,
-        impresion_diagnostica: data.impresion_diagnostica,
-        fecha_hora: `${data.fecha_hora}T00:00:00`,
-        nota_texto: data.nota_texto,
-        transcripcion_entrevista: data.transcripcion_entrevista || undefined,
-      },
-      {
-        onSuccess: () => {
-          navigate(`/pacientes/${pacienteId}`);
+    if (notaId) {
+      updateNotaMutation.mutate(
+        {
+          impresion_diagnostica: data.impresion_diagnostica,
+          fecha_hora: `${data.fecha_hora}T00:00:00`,
+          nota_texto: data.nota_texto,
+          transcripcion_entrevista: data.transcripcion_entrevista || undefined,
         },
-      },
-    );
+        {
+          onSuccess: () => {
+            navigate(`/pacientes/${pacienteId}`);
+          },
+        },
+      );
+    } else {
+      createNotaMutation.mutate(
+        {
+          paciente_id: pacienteId!,
+          numero_sesion: data.numero_sesion,
+          impresion_diagnostica: data.impresion_diagnostica,
+          fecha_hora: `${data.fecha_hora}T00:00:00`,
+          nota_texto: data.nota_texto,
+          transcripcion_entrevista: data.transcripcion_entrevista || undefined,
+        },
+        {
+          onSuccess: () => {
+            navigate(`/pacientes/${pacienteId}`);
+          },
+        },
+      );
+    }
   };
 
   return (
     <>
-      <Topbar title="Nueva Nota de Evolución" subtitle={`Sesión ${siguienteSesion}`} />
+      <Topbar
+            title={viewOnly ? `Nota - Sesión ${getValues('numero_sesion') || ''}` : (notaId ? `Editar Nota - Sesión ${getValues('numero_sesion') || ''}` : 'Nueva Nota de Evolución')}
+            subtitle={viewOnly ? 'Modo solo lectura' : (notaId ? 'Editando sesión existente' : `Sesión ${siguienteSesion}`)}
+          />
       <main className="flex-1 p-6 lg:p-8">
         {/* Back */}
         <div className="flex items-center justify-between mb-6">
@@ -113,19 +154,21 @@ export default function NuevaSesionPage() {
             </div>
           )}
 
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <form onSubmit={handleSubmit(onSubmit as any)} className="p-6 space-y-5">
+{/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <form onSubmit={handleSubmit(viewOnly ? () => {} : onSubmit as any)} className="p-6 space-y-5">
             {/* Número de sesión y fecha */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 label="Número de Sesión"
                 type="number"
+                disabled={viewOnly}
                 error={errors.numero_sesion?.message}
                 {...register('numero_sesion')}
               />
               <Input
                 label="Fecha"
                 type="date"
+                disabled={viewOnly}
                 error={errors.fecha_hora?.message}
                 {...register('fecha_hora')}
               />
@@ -135,6 +178,7 @@ export default function NuevaSesionPage() {
             <Input
               label="Impresión Diagnóstica"
               placeholder="Ej: Ansiedad por evaluaciones académicas"
+              disabled={viewOnly}
               error={errors.impresion_diagnostica?.message}
               {...register('impresion_diagnostica')}
             />
@@ -143,13 +187,16 @@ export default function NuevaSesionPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="label-base mb-0">Contenido de la Nota</label>
-                <VoiceDictation
-                  onTranscript={handleVoiceTranscript('nota_texto')}
-                  targetFieldLabel="Nota"
-                />
+                {!viewOnly && (
+                  <VoiceDictation
+                    onTranscript={handleVoiceTranscript('nota_texto')}
+                    targetFieldLabel="Nota"
+                  />
+                )}
               </div>
               <Textarea
                 placeholder="Describe el contenido de la sesión, observaciones, y plan de trabajo..."
+                disabled={viewOnly}
                 error={errors.nota_texto?.message}
                 className="min-h-[200px]"
                 {...register('nota_texto')}
@@ -163,13 +210,16 @@ export default function NuevaSesionPage() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="label-base mb-0">Transcripción de la Entrevista</label>
-                <VoiceDictation
-                  onTranscript={handleVoiceTranscript('transcripcion_entrevista')}
-                  targetFieldLabel="Transcripción"
-                />
+                {!viewOnly && (
+                  <VoiceDictation
+                    onTranscript={handleVoiceTranscript('transcripcion_entrevista')}
+                    targetFieldLabel="Transcripción"
+                  />
+                )}
               </div>
               <Textarea
                 placeholder="Registra la transcripción completa de la entrevista o sesión..."
+                disabled={viewOnly}
                 error={errors.transcripcion_entrevista?.message}
                 className="min-h-[150px]"
                 {...register('transcripcion_entrevista')}
@@ -183,15 +233,17 @@ export default function NuevaSesionPage() {
                 type="button"
                 onClick={() => navigate(`/pacientes/${pacienteId}`)}
               >
-                Cancelar
+                {viewOnly ? 'Volver' : 'Cancelar'}
               </Button>
-              <Button
-                type="submit"
-                isLoading={createNotaMutation.isPending}
-              >
-                <Save size={16} />
-                Guardar Nota
-              </Button>
+              {!viewOnly && (
+                <Button
+                  type="submit"
+                  isLoading={createNotaMutation.isPending || updateNotaMutation.isPending}
+                >
+                  <Save size={16} />
+                  {notaId ? 'Actualizar Nota' : 'Guardar Nota'}
+                </Button>
+              )}
             </div>
           </form>
         </div>

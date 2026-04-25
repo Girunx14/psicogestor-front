@@ -228,30 +228,47 @@ export default function PacienteDetallePage() {
                 description="Crea una nueva nota de evolución para iniciar el expediente clínico."
               />
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {notas.map((nota) => (
                   <div
                     key={nota.id}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-surface transition-colors cursor-pointer border border-gray-100"
-                    onClick={() => navigate(`/pacientes/${id}/notas/nueva?nota_id=${nota.id}`)}
+                    className="p-4 rounded-lg hover:bg-surface transition-colors cursor-pointer border border-gray-100"
+                    onClick={() => navigate(`/pacientes/${id}/notas/nueva?nota_id=${nota.id}&view=true`)}
                   >
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
-                      {nota.numero_sesion}
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
+                        {nota.numero_sesion}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold text-gray-900">
+                            Sesión {nota.numero_sesion}
+                          </p>
+                          <Badge variant="info">{nota.impresion_diagnostica || '—'}</Badge>
+                        </div>
+                        <p className="text-xs text-secondary-400 flex items-center gap-1 mb-2">
+                          <Calendar size={12} />
+                          {new Date(nota.fecha_hora).toLocaleDateString('es-MX', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        {nota.nota_texto && (
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                            {nota.nota_texto}
+                          </p>
+                        )}
+                        {nota.transcripcion_entrevista && (
+                          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <p className="text-xs font-medium text-gray-500 mb-1">Transcripción:</p>
+                            <p className="text-xs text-gray-600 line-clamp-3">
+                              {nota.transcripcion_entrevista}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
-                        Sesión {nota.numero_sesion}
-                      </p>
-                      <p className="text-xs text-secondary-400 flex items-center gap-1">
-                        <Calendar size={12} />
-                        {new Date(nota.fecha_hora).toLocaleDateString('es-MX', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                    <Badge variant="info">{nota.impresion_diagnostica || '—'}</Badge>
                   </div>
                 ))}
               </div>
