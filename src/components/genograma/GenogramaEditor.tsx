@@ -8,6 +8,7 @@ import {
   useNodesState,
   useEdgesState,
   BackgroundVariant,
+  ReactFlowProvider,
 } from '@xyflow/react';
 import type { Connection, Node, Edge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -17,6 +18,228 @@ import { useGenograma, useSaveGenograma } from '@/hooks/useGenograma';
 import CustomNode from './CustomNode';
 
 const nodeTypes = { custom: CustomNode };
+
+// ── Botón de impresión — debe estar dentro del árbol de ReactFlow ──────────
+function PrintButton({ pacienteNombre }: { pacienteNombre: string }) {
+  const [printing, setPrinting] = useState(false);
+
+  const handlePrint = useCallback(async () => {
+    setPrinting(true);
+    try {
+      // html-to-image captura el elemento DOM del lienzo
+      const { toPng } = await import('html-to-image');
+      const container = document.querySelector('.react-flow') as HTMLElement | null;
+      if (!container) return;
+
+      const options = {
+        backgroundColor: '#F8FAFC',
+        pixelRatio: 2,
+        cacheBust: true,
+        // Excluir controles y minimapa de la imagen
+        filter: (node: HTMLElement) => {
+          if (!node.classList) return true;
+          return (
+            !node.classList.contains('react-flow__minimap') &&
+            !node.classList.contains('react-flow__controls')
+          );
+        },
+      };
+
+      // ⚠️ Primera llamada: "calienta" el cache de fuentes y estilos
+      //    (bug conocido de html-to-image — sin esto los textos salen como bloques negros)
+      await toPng(container, options);
+
+      // Segunda llamada: imagen final con estilos correctamente cargados
+      const dataUrl = await toPng(container, options);
+
+      // Abrir ventana de impresión con encabezado institucional
+      const win = window.open('', '_blank');
+      if (!win) return;
+
+      const fecha = new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+      const hora = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+      win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Genograma — ${pacienteNombre}</title>
+  <style>
+    /* Eliminar los encabezados automáticos del navegador */
+    @page {
+      size: A4 landscape;
+      margin: 1.2cm 1.5cm;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #ffffff;
+      color: #1a1a2e;
+    }
+
+    /* ── Encabezado institucional ──────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 3px solid #1B396A;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+    .header-center { text-align: center; flex: 1; }
+    .header-center h1 {
+      font-size: 11px;
+      font-weight: 800;
+      color: #1B396A;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .header-center h2 {
+      font-size: 10px;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 3px;
+    }
+    .header-meta {
+      font-size: 9px;
+      color: #64748b;
+      margin-top: 5px;
+    }
+    .header-meta strong { color: #1B396A; }
+
+    .badge {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 9px;
+      color: #1B396A;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* ── Imagen del genograma ──────────────────────── */
+    .genograma {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .genograma img {
+      max-width: 100%;
+      max-height: 470px;
+      object-fit: contain;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+    }
+
+    /* ── Pie de página ─────────────────────────────── */
+    .footer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #E2E8F0;
+      padding-top: 6px;
+    }
+    .footer-left { font-size: 8px; color: #94a3b8; }
+    .footer-right { font-size: 8px; color: #94a3b8; }
+
+    /* Leyenda de vínculos */
+    .leyenda {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding: 6px 10px;
+      background: #F8FAFC;
+      border-radius: 6px;
+      border: 1px solid #E2E8F0;
+    }
+    .leyenda-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 8px;
+      color: #475569;
+    }
+    .leyenda-dot {
+      width: 10px;
+      height: 3px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="badge">CONFIDENCIAL</div>
+    <div class="header-center">
+      <h1>Instituto Tecnológico de Villahermosa — Departamento de Psicología</h1>
+      <h2>Genograma Familiar</h2>
+      <p class="header-meta">
+        Paciente: <strong>${pacienteNombre}</strong>
+        &nbsp;&bull;&nbsp;
+        Generado: <strong>${fecha} — ${hora}</strong>
+      </p>
+    </div>
+    <div class="badge">1&nbsp;/&nbsp;1</div>
+  </div>
+
+  <div class="genograma">
+    <img src="${dataUrl}" />
+  </div>
+
+  <div class="leyenda">
+    <span class="leyenda-item"><span class="leyenda-dot" style="background:#10b981"></span>Descendencia</span>
+    <span class="leyenda-item"><span class="leyenda-dot" style="background:#1B396A"></span>Matrimonio</span>
+    <span class="leyenda-item"><span class="leyenda-dot" style="background:#6366f1"></span>Unión libre</span>
+    <span class="leyenda-item"><span class="leyenda-dot" style="background:#f59e0b"></span>Separación</span>
+    <span class="leyenda-item"><span class="leyenda-dot" style="background:#ef4444"></span>Divorcio</span>
+    <span class="leyenda-item"><span class="leyenda-dot" style="background:#f97316"></span>Conflicto</span>
+    <span class="leyenda-item"><span class="leyenda-dot" style="background:#06b6d4"></span>Cercano</span>
+    <span class="leyenda-item">⬜ Hombre &nbsp; ⬤ Mujer &nbsp; ✕ Fallecido</span>
+  </div>
+
+  <div class="footer">
+    <span class="footer-left">Sistema de Gestión Psicológica — ITVH &mdash; Documento Confidencial</span>
+    <span class="footer-right">No reproducir sin autorización del responsable del servicio</span>
+  </div>
+
+  <script>
+    window.onload = () => {
+      // Esperar a que la imagen cargue antes de imprimir
+      const img = document.querySelector('img');
+      if (img && !img.complete) {
+        img.onload = () => setTimeout(() => window.print(), 300);
+      } else {
+        setTimeout(() => window.print(), 400);
+      }
+    };
+  <\/script>
+</body>
+</html>`);
+      win.document.close();
+    } catch (err) {
+      console.error('Error generando imagen del genograma:', err);
+    } finally {
+      setPrinting(false);
+    }
+  }, [pacienteNombre]);
+
+  /*return (
+    <button
+      onClick={handlePrint}
+      disabled={printing}
+      title="Imprimir / Exportar PDF"
+      className="w-full py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50"
+    >
+      {printing ? 'Preparando…' : '🖨 Imprimir / PDF'}
+    </button>
+  ); */
+}
+
 
 const TIPOS_MIEMBRO = [
   { value: 'padre', label: 'Padre' },
@@ -72,7 +295,7 @@ interface Props {
   pacienteNombre: string;
 }
 
-export default function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
+function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
   const { data: genogramaData, isLoading } = useGenograma(pacienteId);
   const saveMutation = useSaveGenograma(pacienteId);
 
@@ -98,8 +321,8 @@ export default function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
       id: e.id,
       source: e.source,
       target: e.target,
-      label: TIPOS_RELACION.find((r) => r.value === e.tipo)?.label ?? e.tipo,
-      style: { stroke: EDGE_COLORS[e.tipo] ?? '#94a3b8', strokeWidth: 2 },
+      // Sin label: el color ya identifica el tipo (ver leyenda en el PDF)
+      style: { stroke: EDGE_COLORS[e.tipo] ?? '#94a3b8', strokeWidth: 2.5 },
       data: { tipo: e.tipo },
     }));
 
@@ -150,8 +373,8 @@ export default function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
           {
             ...params,
             id: edgeId,
-            label: TIPOS_RELACION.find((r) => r.value === relTipo)?.label ?? relTipo,
-            style: { stroke: EDGE_COLORS[relTipo] ?? '#94a3b8', strokeWidth: 2 },
+            // Sin label: el color ya identifica el tipo (ver leyenda en el PDF)
+            style: { stroke: EDGE_COLORS[relTipo] ?? '#94a3b8', strokeWidth: 2.5 },
             data: { tipo: relTipo },
           },
           eds
@@ -194,19 +417,19 @@ export default function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
       nds.map((n) =>
         n.id === editingNode.id
           ? {
-              ...n,
-              data: {
-                ...n.data,
-                nombre: editingNode.nombre,
-                tipo: editingNode.tipo,
-                sexo: editingNode.sexo,
-                edad: editingNode.edad ? parseInt(editingNode.edad) : undefined,
-                fallecido: editingNode.fallecido,
-                enfermedad: editingNode.enfermedad || undefined,
-                notas: editingNode.notas || undefined,
-                onEdit: openEdit,
-              },
-            }
+            ...n,
+            data: {
+              ...n.data,
+              nombre: editingNode.nombre,
+              tipo: editingNode.tipo,
+              sexo: editingNode.sexo,
+              edad: editingNode.edad ? parseInt(editingNode.edad) : undefined,
+              fallecido: editingNode.fallecido,
+              enfermedad: editingNode.enfermedad || undefined,
+              notas: editingNode.notas || undefined,
+              onEdit: openEdit,
+            },
+          }
           : n
       )
     );
@@ -278,6 +501,8 @@ export default function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
         >
           {saveMutation.isPending ? 'Guardando…' : saved ? '✓ Guardado' : 'Guardar Genograma'}
         </button>
+
+        {/*<PrintButton pacienteNombre={pacienteNombre} />*/}
 
         <div className="text-xs text-gray-400 space-y-1 mt-auto">
           <p>• Arrastra nodos para reorganizar</p>
@@ -417,5 +642,14 @@ export default function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+// Envolver con ReactFlowProvider para que PrintButton tenga acceso a useReactFlow()
+export default function GenogramaEditorWrapper(props: { pacienteId: string; pacienteNombre: string }) {
+  return (
+    <ReactFlowProvider>
+      <GenogramaEditor {...props} />
+    </ReactFlowProvider>
   );
 }
