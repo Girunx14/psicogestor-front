@@ -1,12 +1,13 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, RefreshCw } from 'lucide-react';
+import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Modal from '@/components/ui/Modal';
+import GenogramaEditor from '@/components/genograma/GenogramaEditor';
 import { usePaciente, useDeletePaciente } from '@/hooks/usePacientes';
 import { useNotasPaciente } from '@/hooks/useNotas';
 import { useResumenPaciente, useGenerarResumen } from '@/hooks/useResumenes';
@@ -23,6 +24,7 @@ export default function PacienteDetallePage() {
   const { data: resumen } = useResumenPaciente(pacienteId);
   const generarResumenMutation = useGenerarResumen();
   const [showResumenModal, setShowResumenModal] = useState(false);
+  const [showGenograma, setShowGenograma] = useState(false);
 
   const handleGenerarResumen = () => {
     generarResumenMutation.mutate(pacienteId, {
@@ -279,6 +281,30 @@ export default function PacienteDetallePage() {
             )}
           </div>
         </section>
+
+        {/* Genograma */}
+        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <button
+            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+            onClick={() => setShowGenograma((v) => !v)}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center">
+                <GitBranch size={16} className="text-emerald-600" />
+              </div>
+              <h3 className="text-base font-semibold text-gray-800">Genograma Familiar</h3>
+            </div>
+            <span className="text-xs text-gray-400">{showGenograma ? '▲ Contraer' : '▼ Expandir'}</span>
+          </button>
+          {showGenograma && (
+            <div className="px-6 pb-6">
+              <GenogramaEditor
+                pacienteId={pacienteId}
+                pacienteNombre={`${paciente.nombres} ${paciente.apellido_paterno}`}
+              />
+            </div>
+          )}
+        </section>
       </main>
 
       {/* Resumen IA modal */}
@@ -351,7 +377,7 @@ export default function PacienteDetallePage() {
                     <Sparkles size={24} className="text-purple-300" />
                   </div>
                   <p className="text-gray-600 font-medium mb-2">Aún no hay resumen generado</p>
-                  <p className="text-sm text-gray-400 mb-6">La IA analizará todas las sesiones registradas y生成ará un resumen clínico.</p>
+                  <p className="text-sm text-gray-400 mb-6">La IA analizará todas las sesiones registradas y generará un resumen clínico.</p>
                   <Button
                     isLoading={generarResumenMutation.isPending}
                     onClick={handleGenerarResumen}
