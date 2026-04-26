@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Badge from '@/components/ui/Badge';
@@ -104,14 +105,6 @@ export default function PacienteDetallePage() {
           <Button onClick={() => navigate(`/pacientes/${id}/notas/nueva`)}>
             <Plus size={16} />
             Nueva Nota
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowResumenModal(true)}
-            className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:bg-purple-50"
-          >
-            <Sparkles size={16} />
-            Resumen IA
           </Button>
           <Button variant="outline" className="ml-auto text-red-600 border-red-200 hover:bg-red-50" onClick={() => setShowDeleteModal(true)}>
             <Trash2 size={16} />
@@ -219,7 +212,18 @@ export default function PacienteDetallePage() {
               </span>
               <h3 className="text-sm font-semibold text-gray-900">Notas de Evolución</h3>
             </div>
-            <span className="text-xs text-secondary-400 bg-secondary-50 px-2 py-1 rounded-full">{notasData?.total ?? 0} notas</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowResumenModal(true)}
+                className="text-xs bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:bg-purple-50"
+              >
+                <Sparkles size={14} />
+                Resumen IA
+              </Button>
+              <span className="text-xs text-secondary-400 bg-secondary-50 px-2 py-1 rounded-full">{notasData?.total ?? 0} notas</span>
+            </div>
           </div>
 
           <div className="p-5">
@@ -230,30 +234,47 @@ export default function PacienteDetallePage() {
                 description="Crea una nueva nota de evolución para iniciar el expediente clínico."
               />
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {notas.map((nota) => (
                   <div
                     key={nota.id}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-surface transition-colors cursor-pointer border border-gray-100"
-                    onClick={() => navigate(`/pacientes/${id}/notas/nueva?nota_id=${nota.id}`)}
+                    className="p-4 rounded-lg hover:bg-surface transition-colors cursor-pointer border border-gray-100"
+                    onClick={() => navigate(`/pacientes/${id}/notas/nueva?nota_id=${nota.id}&view=true`)}
                   >
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
-                      {nota.numero_sesion}
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
+                        {nota.numero_sesion}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold text-gray-900">
+                            Sesión {nota.numero_sesion}
+                          </p>
+                          <Badge variant="info">{nota.impresion_diagnostica || '—'}</Badge>
+                        </div>
+                        <p className="text-xs text-secondary-400 flex items-center gap-1 mb-2">
+                          <Calendar size={12} />
+                          {new Date(nota.fecha_hora).toLocaleDateString('es-MX', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        {nota.nota_texto && (
+                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                            {nota.nota_texto}
+                          </p>
+                        )}
+                        {nota.transcripcion_entrevista && (
+                          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <p className="text-xs font-medium text-gray-500 mb-1">Transcripción:</p>
+                            <p className="text-xs text-gray-600 line-clamp-3">
+                              {nota.transcripcion_entrevista}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">
-                        Sesión {nota.numero_sesion}
-                      </p>
-                      <p className="text-xs text-secondary-400 flex items-center gap-1">
-                        <Calendar size={12} />
-                        {new Date(nota.fecha_hora).toLocaleDateString('es-MX', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                    <Badge variant="info">{nota.impresion_diagnostica || '—'}</Badge>
                   </div>
                 ))}
               </div>
@@ -324,19 +345,31 @@ export default function PacienteDetallePage() {
               </div>
 
               {resumen?.contenido_resumen ? (
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100">
-                  <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap">
-                    {resumen.contenido_resumen}
+                <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-6 border border-gray-200 overflow-y-auto max-h-[50vh]">
+                  <div className="resumen-markdown text-sm text-gray-700">
+                    <ReactMarkdown>{resumen.contenido_resumen}</ReactMarkdown>
                   </div>
-                  <p className="text-xs text-gray-400 mt-4 text-right">
-                    Última actualización: {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
-                  </p>
+                  <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+                    <p className="text-xs text-gray-400">
+                      Generado: {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      isLoading={generarResumenMutation.isPending}
+                      onClick={handleGenerarResumen}
+                      className="text-xs text-purple-600 hover:text-purple-700"
+                    >
+                      <RefreshCw size={12} className="mr-1" />
+                      Regenerar
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -344,7 +377,7 @@ export default function PacienteDetallePage() {
                     <Sparkles size={24} className="text-purple-300" />
                   </div>
                   <p className="text-gray-600 font-medium mb-2">Aún no hay resumen generado</p>
-                  <p className="text-sm text-gray-400 mb-6">La IA analizará todas las sesiones registradas y生成ará un resumen clínico.</p>
+                  <p className="text-sm text-gray-400 mb-6">La IA analizará todas las sesiones registradas y generará un resumen clínico.</p>
                   <Button
                     isLoading={generarResumenMutation.isPending}
                     onClick={handleGenerarResumen}
