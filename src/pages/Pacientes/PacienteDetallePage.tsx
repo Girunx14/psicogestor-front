@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw } from 'lucide-react';
+import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw, Brain } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -213,15 +213,13 @@ export default function PacienteDetallePage() {
               <h3 className="text-sm font-semibold text-gray-900">Notas de Evolución</h3>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() => setShowResumenModal(true)}
-                className="text-xs bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200 hover:bg-purple-50"
+                className="btn-ai-glow inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
               >
-                <Sparkles size={14} />
-                Resumen IA
-              </Button>
+                <Brain size={14} />
+                <span>Resumen IA</span>
+              </button>
               <span className="text-xs text-secondary-400 bg-secondary-50 px-2 py-1 rounded-full">{notasData?.total ?? 0} notas</span>
             </div>
           </div>
@@ -313,79 +311,139 @@ export default function PacienteDetallePage() {
         onClose={() => setShowResumenModal(false)}
         title="Resumen Clínico con IA"
         size="lg"
+        variant="ai-header"
       >
-        <div className="space-y-4">
+        <div className="space-y-5">
           {notas.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileText size={24} className="text-purple-300" />
+            <div className="ai-empty-state ai-animate-in">
+              <div className="ai-icon-container">
+                <FileText size={32} className="text-teal-600 relative z-10" />
               </div>
-              <p className="text-gray-500 mb-4">No hay suficientes sesiones para generar un resumen.</p>
-              <p className="text-sm text-gray-400">Registra al menos una nota de evolución para que la IA pueda analizar el historial del paciente.</p>
+              <div className="ai-badge mb-4">
+                <Brain size={10} />
+                Sin datos suficientes
+              </div>
+              <h4 className="text-lg font-semibold text-slate-800 mb-2">No hay sesiones registradas</h4>
+              <p className="text-sm text-slate-500 max-w-xs mx-auto leading-relaxed">
+                Registra al menos una nota de evolución para que la inteligencia artificial pueda analizar el historial clínico del paciente.
+              </p>
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-xl border border-purple-100">
+              <div className="ai-animate-in ai-animate-in-1 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Sparkles size={20} className="text-purple-600" />
-                  <div>
-                    <p className="font-semibold text-gray-900">Resumen generado por IA</p>
-                    <p className="text-xs text-gray-500">Basado en {notas.length} sesión{notas.length !== 1 ? 'es' : ''} registrada{notas.length !== 1 ? 's' : ''}</p>
+                  <div className="ai-badge">
+                    <Brain size={10} />
+                    AI Powered
                   </div>
+                  <span className="text-xs text-slate-500">
+                    {notas.length} sesión{notas.length !== 1 ? 'es' : ''} analizada{notas.length !== 1 ? 's' : ''}
+                  </span>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  isLoading={generarResumenMutation.isPending}
-                  onClick={handleGenerarResumen}
-                >
-                  <RefreshCw size={14} />
-                  Regenerar
-                </Button>
+                {resumen?.contenido_resumen && (
+                  <button
+                    onClick={handleGenerarResumen}
+                    disabled={generarResumenMutation.isPending}
+                    className="btn-ai-regenerate inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+                  >
+                    {generarResumenMutation.isPending ? (
+                      <div className="neural-pulse">
+                        <RefreshCw size={12} className="animate-spin" />
+                      </div>
+                    ) : (
+                      <>
+                        <RefreshCw size={12} />
+                        Regenerar
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
               {resumen?.contenido_resumen ? (
-                <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-xl p-6 border border-gray-200 overflow-y-auto max-h-[50vh]">
-                  <div className="resumen-markdown text-sm text-gray-700">
+                <div className="ai-summary-card ai-animate-in ai-animate-in-2 rounded-xl p-6">
+                  <div className="resumen-markdown text-sm">
                     <ReactMarkdown>{resumen.contenido_resumen}</ReactMarkdown>
                   </div>
-                  <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
-                    <p className="text-xs text-gray-400">
-                      Generado: {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
+                  <div className="mt-5 pt-4 border-t border-slate-200/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-teal-500">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                      Generado el {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
                         day: '2-digit',
                         month: 'long',
                         year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      isLoading={generarResumenMutation.isPending}
+                    </div>
+                    <button
                       onClick={handleGenerarResumen}
-                      className="text-xs text-purple-600 hover:text-purple-700"
+                      disabled={generarResumenMutation.isPending}
+                      className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors disabled:opacity-50"
                     >
-                      <RefreshCw size={12} className="mr-1" />
-                      Regenerar
-                    </Button>
+                      {generarResumenMutation.isPending ? (
+                        <>
+                          <div className="neural-pulse">
+                            <RefreshCw size={11} className="animate-spin" />
+                          </div>
+                          Generando...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw size={11} />
+                          Regenerar resumen
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Sparkles size={24} className="text-purple-300" />
+                <div className="ai-animate-in ai-animate-in-2 text-center py-10">
+                  <div className="ai-icon-container mb-5">
+                    <Brain size={36} className="text-teal-600 relative z-10" />
                   </div>
-                  <p className="text-gray-600 font-medium mb-2">Aún no hay resumen generado</p>
-                  <p className="text-sm text-gray-400 mb-6">La IA analizará todas las sesiones registradas y generará un resumen clínico.</p>
-                  <Button
-                    isLoading={generarResumenMutation.isPending}
+                  <h4 className="text-lg font-semibold text-slate-800 mb-2">Listo para analizar</h4>
+                  <p className="text-sm text-slate-500 max-w-sm mx-auto mb-6 leading-relaxed">
+                    La inteligencia artificial analizará las {notas.length} sesión{notas.length !== 1 ? 'es' : ''} registrada{notas.length !== 1 ? 's' : ''} y generará un resumen clínico integral.
+                  </p>
+                  <button
                     onClick={handleGenerarResumen}
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                    disabled={generarResumenMutation.isPending}
+                    className="btn-ai-generate inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-70"
                   >
-                    <Sparkles size={16} />
-                    Generar Resumen con IA
-                  </Button>
+                    {generarResumenMutation.isPending ? (
+                      <>
+                        <div className="neural-pulse">
+                          <Sparkles size={16} />
+                        </div>
+                        Analizando sesiones...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={16} />
+                        Generar Resumen Clínico
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {generarResumenMutation.isPending && resumen?.contenido_resumen && (
+                <div className="ai-animate-in ai-animate-in-3 text-center py-6">
+                  <div className="inline-flex flex-col items-center">
+                    <div className="relative w-16 h-16 mb-4">
+                      <div className="absolute inset-0 rounded-full border-2 border-teal-200"></div>
+                      <div className="absolute inset-0 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
+                      <div className="absolute inset-3 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center">
+                        <Brain size={18} className="text-teal-600" />
+                      </div>
+                    </div>
+                    <p className="text-sm font-medium text-slate-700">Generando nuevo resumen...</p>
+                    <p className="text-xs text-slate-400 mt-1">Analizando patrones y tendencias</p>
+                  </div>
                 </div>
               )}
             </>
