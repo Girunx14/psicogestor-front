@@ -79,7 +79,7 @@ export default function DashboardPacientePage() {
             <CalendarClock className="text-primary" size={20} />
             Próximas Citas
           </h2>
-          
+
           {loadingCitas ? (
             <div className="p-8 text-center text-secondary-500">Cargando tus citas...</div>
           ) : proximasCitas.length === 0 ? (
@@ -95,16 +95,15 @@ export default function DashboardPacientePage() {
                   <div>
                     <p className="font-semibold text-gray-900 text-lg">{cita.fecha}</p>
                     <p className="text-secondary-600 font-medium">
-                      {cita.hora?.slice(0, 5)} hrs
+                      {cita.hora_inicio?.slice(0, 5)} hrs
                     </p>
                     <p className="text-sm text-secondary-500 mt-1 bg-white inline-block px-2 py-0.5 rounded-md border border-secondary-200">
                       Modalidad: {cita.tipo}
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
-                      cita.estado === 'confirmada' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                    }`}>
+                    <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${cita.estado === 'confirmada' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
                       {cita.estado === 'confirmada' ? 'Confirmada' : 'En espera'}
                     </span>
                     {cita.enlace_videollamada && (
@@ -152,7 +151,7 @@ export default function DashboardPacientePage() {
           <p className="text-sm text-secondary-600 mb-4 bg-primary/10 p-3 rounded-lg text-primary-900 border border-primary/20">
             <strong>Instrucciones:</strong> Elige primero la modalidad (Presencial o Virtual), selecciona el horario disponible, y cuéntanos brevemente el motivo para que el psicólogo prepare la sesión.
           </p>
-          
+
           <div className="grid grid-cols-1 mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Modalidad de Atención
@@ -183,11 +182,11 @@ export default function DashboardPacientePage() {
               .filter(h => h.tipo === modalidad)
               .map((h) => ({
                 value: h.id,
-                label: `${h.fecha} — ${h.hora.slice(0, 5)} (${h.tipo})`,
+                label: `${h.fecha} — ${h.hora_inicio.slice(0, 5)} (${h.tipo})`,
               }))}
             {...register('horario_id')}
           />
-          
+
           <Textarea
             label="¿Cuál es el motivo de la consulta?"
             placeholder="Ejemplo: Necesito asesoría por temas de estrés escolar..."

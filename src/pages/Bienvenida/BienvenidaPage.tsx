@@ -31,16 +31,20 @@ export default function BienvenidaPage() {
     const patients = pacientesData?.items || [];
 
     return citas
-      .filter((c) => c.fecha === today)
+      .filter((c) => {
+        if (!c.fecha) return false;
+        const normalizedFecha = c.fecha.split('T')[0];
+        return normalizedFecha === today;
+      })
       .sort((a, b) => {
-        const timeA = a.hora_inicio || '';
-        const timeB = b.hora_inicio || '';
+        const timeA = a.hora_inicio || (a as any).hora || '';
+        const timeB = b.hora_inicio || (b as any).hora || '';
         return timeA.localeCompare(timeB);
       })
       .map((cita) => {
         const paciente = patients.find((p) => p.id === cita.paciente_id);
-        
-        const h = cita.hora_inicio || '00:00:00';
+
+        const h = cita.hora_inicio || (cita as any).hora || '00:00:00';
         const [hourStr, minStr] = h.split(':');
         const hourNum = parseInt(hourStr, 10) || 0;
         const ampm = hourNum >= 12 ? 'PM' : 'AM';
@@ -132,7 +136,7 @@ export default function BienvenidaPage() {
 
       {/* Main Content */}
       <main className="max-w-5xl mx-auto p-8 -mt-6">
-        <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100">
           {/* Agenda Header */}
           <div className="px-8 py-6 flex items-center justify-between border-b border-gray-50">
             <h4 className="text-xl font-bold text-[#1B396A]">Agenda del Día</h4>
@@ -193,7 +197,7 @@ export default function BienvenidaPage() {
                   </div>
 
                   {/* Status & Actions */}
-                  <div className="flex items-center gap-4">
+                  {/*<div className="flex items-center gap-4">
                     <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${cita.estado === 'confirmada'
                       ? 'bg-emerald-100 text-emerald-700'
                       : cita.estado === 'completada'
@@ -212,6 +216,35 @@ export default function BienvenidaPage() {
                         <MoreVertical size={20} />
                       </button>
                     )}
+                  </div> */}
+
+                  <div className="relative inline-block text-left">
+
+                    {/* Botón de 3 puntitos */}
+                    <button className="flex items-center p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 peer">
+                      <svg className="w-6 h-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path>
+                      </svg>
+                    </button>
+
+                    {/* Menú de opciones */}
+                    <div className="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none hidden peer-focus:block hover:block border border-gray-100">
+                      <div className="py-2" role="none">
+                        <button
+                          onClick={() => navigate(`/pacientes?search=${cita.paciente_id}`)}
+                          className="w-full text-left block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Ver Expediente
+                        </button>
+                        <button
+                          onClick={() => navigate(`/citas`)}
+                          className="w-full text-left block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Ir a Calendario
+                        </button>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               ))
@@ -237,7 +270,7 @@ export default function BienvenidaPage() {
               onClick={() => navigate('/estadisticas')}
               className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
             >
-              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
                 <Calendar size={24} />
               </div>
               <h6 className="font-bold text-[#1B396A] mb-1">Estadísticas</h6>
@@ -248,7 +281,7 @@ export default function BienvenidaPage() {
               onClick={() => navigate('/horarios')}
               className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
             >
-              <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
                 <MoreVertical size={24} />
               </div>
               <h6 className="font-bold text-[#1B396A] mb-1">Configuración de Horarios</h6>
@@ -257,6 +290,28 @@ export default function BienvenidaPage() {
           </div>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="bg-white text-gray-600 py-8 px-4 border-t border-gray-100">
+        {/* Contenedor principal: Usamos flex y col-center para asegurar el centrado total */}
+        <div className="max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
+
+          {/* Sección: Marca y Bio */}
+          <div className="space-y-2">
+            <h2 className="text-gray-900 text-2xl font-bold">PsicoGestor</h2>
+            <p className="text-sm max-w-xs mx-auto leading-relaxed text-gray-500">
+              Gestión de citas y pacientes para psicólogos.
+            </p>
+          </div>
+
+          {/* Línea inferior de copyright */}
+          <div className="border-t border-gray-100 w-full max-w-xs mt-6 pt-4 text-xs text-gray-400">
+            &copy; 2026 PsicpoGestor. Por Gerardo Segura Navarro y Marcos Cardenas Magaña
+          </div>
+        </div>
+      </footer>
+
+
     </div>
   );
 }
