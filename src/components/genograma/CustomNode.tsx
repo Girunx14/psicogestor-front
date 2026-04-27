@@ -33,8 +33,8 @@ export default memo(function CustomNode({ data }: NodeProps) {
   const esPaciente = nodeData.tipo === 'paciente';
 
   const baseStyle: React.CSSProperties = {
-    width: 64,
-    height: 64,
+    width: 80,
+    height: 80,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -43,8 +43,8 @@ export default memo(function CustomNode({ data }: NodeProps) {
     cursor: 'pointer',
     position: 'relative',
     userSelect: 'none',
-    border: esPaciente ? '3px solid #1B396A' : '2px solid #64748b',
-    backgroundColor: esPaciente ? '#EFF6FF' : '#F8FAFC',
+    border: esPaciente ? '4px double #1B396A' : '2px solid #64748b',
+    backgroundColor: esPaciente ? '#EFF6FF' : esFemenino ? '#FDF2F8' : '#F0F9FF',
     color: '#1e293b',
     borderRadius: esFemenino ? '50%' : '4px',
     // Fallecido: añadir línea diagonal simulada con box-shadow
@@ -57,29 +57,37 @@ export default memo(function CustomNode({ data }: NodeProps) {
       onClick={() => nodeData.onEdit(nodeData)}
       title={`${nodeData.nombre} — Clic para editar`}
     >
-      <Handle type="target" position={Position.Top} style={{ background: '#94a3b8' }} />
-      <Handle type="source" position={Position.Bottom} style={{ background: '#94a3b8' }} />
-      <Handle type="source" position={Position.Left} style={{ background: '#94a3b8' }} />
-      <Handle type="source" position={Position.Right} style={{ background: '#94a3b8' }} />
-
-      {/* Cruz de fallecido */}
-      {nodeData.fallecido && (
-        <span style={{
-          position: 'absolute', fontSize: 26, color: '#ef4444', top: -6, right: -2, lineHeight: 1,
-        }}>✕</span>
-      )}
+      <Handle type="target" position={Position.Top} id="top-target" style={{ background: '#94a3b8', width: 8, height: 8, top: -4 }} />
+      <Handle type="source" position={Position.Top} id="top-source" style={{ background: 'transparent', width: 8, height: 8, top: -4, pointerEvents: 'none' }} />
+      <Handle type="target" position={Position.Bottom} id="bottom-target" style={{ background: '#94a3b8', width: 8, height: 8, bottom: -4 }} />
+      <Handle type="source" position={Position.Bottom} id="bottom-source" style={{ background: 'transparent', width: 8, height: 8, bottom: -4, pointerEvents: 'none' }} />
+      <Handle type="target" position={Position.Left} id="left-target" style={{ background: '#94a3b8', width: 8, height: 8, left: -4 }} />
+      <Handle type="source" position={Position.Left} id="left-source" style={{ background: 'transparent', width: 8, height: 8, left: -4, pointerEvents: 'none' }} />
+      <Handle type="target" position={Position.Right} id="right-target" style={{ background: '#94a3b8', width: 8, height: 8, right: -4 }} />
+      <Handle type="source" position={Position.Right} id="right-source" style={{ background: 'transparent', width: 8, height: 8, right: -4, pointerEvents: 'none' }} />
 
       <div style={{ textAlign: 'center', padding: 2 }}>
         <div style={{ fontSize: 9, color: '#64748b', marginBottom: 1 }}>
           {TIPO_LABELS[nodeData.tipo] ?? nodeData.tipo}
         </div>
-        <div style={{ fontSize: 11, wordBreak: 'break-word', maxWidth: 56 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, wordBreak: 'break-word', maxWidth: 72 }}>
           {nodeData.nombre || '—'}
         </div>
         {nodeData.edad != null && (
           <div style={{ fontSize: 9, color: '#94a3b8' }}>{nodeData.edad} años</div>
         )}
       </div>
+
+      {nodeData.fallecido && (
+        <div style={{
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          fontSize: 10,
+          color: '#ef4444',
+          fontWeight: 700,
+        }}>✕</div>
+      )}
     </div>
   );
 });

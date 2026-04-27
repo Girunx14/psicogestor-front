@@ -16,8 +16,10 @@ import '@xyflow/react/dist/style.css';
 import type { GenogramaNode, GenogramaEdge } from '@/api/genogramaApi';
 import { useGenograma, useSaveGenograma } from '@/hooks/useGenograma';
 import CustomNode from './CustomNode';
+import CustomEdge from './CustomEdge';
 
 const nodeTypes = { custom: CustomNode };
+const edgeTypes = { custom: CustomEdge };
 
 // ── Botón de impresión — debe estar dentro del árbol de ReactFlow ──────────
 function PrintButton({ pacienteNombre }: { pacienteNombre: string }) {
@@ -267,18 +269,6 @@ const TIPOS_RELACION = [
   { value: 'distante', label: 'Distante' },
 ] as const;
 
-// Colores de aristas por tipo de relación
-const EDGE_COLORS: Record<string, string> = {
-  matrimonio: '#1B396A',
-  union_libre: '#6366f1',
-  separacion: '#f59e0b',
-  divorcio: '#ef4444',
-  hijo: '#10b981',
-  conflicto: '#f97316',
-  cercano: '#06b6d4',
-  distante: '#94a3b8',
-};
-
 interface EditForm {
   id: string;
   nombre: string;
@@ -321,8 +311,7 @@ function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
       id: e.id,
       source: e.source,
       target: e.target,
-      // Sin label: el color ya identifica el tipo (ver leyenda en el PDF)
-      style: { stroke: EDGE_COLORS[e.tipo] ?? '#94a3b8', strokeWidth: 2.5 },
+      type: 'custom',
       data: { tipo: e.tipo },
     }));
 
@@ -373,8 +362,7 @@ function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
           {
             ...params,
             id: edgeId,
-            // Sin label: el color ya identifica el tipo (ver leyenda en el PDF)
-            style: { stroke: EDGE_COLORS[relTipo] ?? '#94a3b8', strokeWidth: 2.5 },
+            type: 'custom',
             data: { tipo: relTipo },
           },
           eds
@@ -521,6 +509,8 @@ function GenogramaEditor({ pacienteId, pacienteNombre }: Props) {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={{ type: 'custom' }}
           fitView
           deleteKeyCode="Delete"
         >
