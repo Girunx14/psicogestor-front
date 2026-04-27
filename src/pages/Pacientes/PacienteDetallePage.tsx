@@ -7,10 +7,12 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import Modal from '@/components/ui/Modal';
+import { CardEditorialHeader } from '@/components/ui/Card';
 import GenogramaEditor from '@/components/genograma/GenogramaEditor';
 import { usePaciente, useDeletePaciente } from '@/hooks/usePacientes';
 import { useNotasPaciente } from '@/hooks/useNotas';
 import { useResumenPaciente, useGenerarResumen } from '@/hooks/useResumenes';
+import { useCatalogos } from '@/hooks/useCatalogos';
 
 export default function PacienteDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +27,18 @@ export default function PacienteDetallePage() {
   const generarResumenMutation = useGenerarResumen();
   const [showResumenModal, setShowResumenModal] = useState(false);
   const [showGenograma, setShowGenograma] = useState(false);
+
+  const { data: catalogos } = useCatalogos();
+  const carreras = catalogos?.carreras ?? [];
+  const religiones = catalogos?.religiones ?? [];
+
+  const getCarreraNombre = (carreraId: number) => {
+    return carreras.find(c => c.id === carreraId)?.nombre || '—';
+  };
+
+  const getReligionNombre = (religionId: number) => {
+    return religiones.find(r => r.id === religionId)?.nombre || '—';
+  };
 
   const handleGenerarResumen = () => {
     generarResumenMutation.mutate(pacienteId, {
@@ -61,6 +75,10 @@ export default function PacienteDetallePage() {
     });
   };
 
+  const getInitials = (nombres: string, ap: string, am: string) => {
+    return `${nombres.charAt(0)}${ap.charAt(0)}${am ? am.charAt(0) : ''}`.toUpperCase();
+  };
+
   if (isLoading) {
     return (
       <>
@@ -95,124 +113,220 @@ export default function PacienteDetallePage() {
         title={`${paciente.nombres} ${paciente.apellido_paterno} ${paciente.apellido_materno}`}
         subtitle={`No. Control: ${paciente.numero_control}`}
       />
-      <main className="flex-1 p-6 lg:p-8 space-y-6">
-        {/* Actions */}
-        <div className="flex gap-3 flex-wrap">
-          <Button variant="outline" onClick={() => navigate(`/pacientes/${id}/editar`)}>
-            <Edit size={16} />
-            Editar Datos
-          </Button>
-          <Button onClick={() => navigate(`/pacientes/${id}/notas/nueva`)}>
-            <Plus size={16} />
-            Nueva Nota
-          </Button>
-          <Button variant="outline" className="ml-auto text-red-600 border-red-200 hover:bg-red-50" onClick={() => setShowDeleteModal(true)}>
-            <Trash2 size={16} />
-            Eliminar
-          </Button>
+      <main className="flex-1 p-6 lg:p-8 space-y-8">
+
+        {/* Patient Header Hero */}
+        <div className="patient-header page-enter page-enter-1">
+          <div className="flex items-start gap-5">
+            <div className="patient-avatar">
+              {getInitials(paciente.nombres, paciente.apellido_paterno, paciente.apellido_materno)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="patient-name">{paciente.nombres} {paciente.apellido_paterno} {paciente.apellido_materno}</h1>
+              <div className="patient-meta">
+                {edad !== null && (
+                  <>
+                    <span className="patient-meta-item">
+                      <User size={14} />
+                      {edad} años
+                    </span>
+                    <span className="patient-meta-divider" />
+                  </>
+                )}
+                <span className="patient-meta-item">
+                  {paciente.sexo === 'M' ? 'Masculino' : paciente.sexo === 'F' ? 'Femenino' : paciente.sexo}
+                </span>
+                <span className="patient-meta-divider" />
+                <span className="patient-meta-item tag-editorial">
+                  No. {paciente.numero_control}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-3 mt-6 pt-5 border-t border-[#E5E4E2]">
+            <button
+              onClick={() => navigate(`/pacientes/${id}/editar`)}
+              className="btn-action btn-action-outline"
+            >
+              <Edit size={16} />
+              Editar Datos
+            </button>
+            <button
+              onClick={() => navigate(`/pacientes/${id}/notas/nueva`)}
+              className="btn-action btn-action-primary"
+            >
+              <Plus size={16} />
+              Nueva Nota
+            </button>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="btn-action btn-action-danger-outline ml-auto"
+            >
+              <Trash2 size={16} />
+              Eliminar
+            </button>
+          </div>
         </div>
 
-        {/* Patient info grid */}
+        {/* Data Sections Title */}
+        <div className="page-enter page-enter-2">
+          <h2 className="section-title">Información del Paciente</h2>
+        </div>
+
+        {/* Patient Info Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
           {/* Datos personales */}
-          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                <User className="w-4 h-4 text-primary" />
-              </span>
-              <h3 className="text-sm font-semibold text-gray-900">Datos Personales</h3>
-            </div>
-            <div className="p-5">
-              <dl className="space-y-0 text-sm">
-                <Row label="Nombre completo" value={`${paciente.nombres} ${paciente.apellido_paterno} ${paciente.apellido_materno}`} />
-                <Row label="Fecha de nacimiento" value={formatLocalDate(paciente.fecha_nacimiento)} />
-                <Row label="Edad" value={edad !== null ? `${edad} años` : '—'} />
-                <Row label="Sexo" value={paciente.sexo === 'M' ? 'Masculino' : paciente.sexo === 'F' ? 'Femenino' : paciente.sexo} />
+          <div className="card-editorial page-enter page-enter-2">
+            <CardEditorialHeader
+              icon={<User size={18} className="text-[#1B396A]" />}
+              title="Datos Personales"
+            />
+            <div className="card-editorial-body">
+              <dl className="space-y-0">
+                <div className="info-row">
+                  <dt className="info-row-label">Nombre completo</dt>
+                  <dd className="info-row-value">{paciente.nombres} {paciente.apellido_paterno} {paciente.apellido_materno}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Fecha de nacimiento</dt>
+                  <dd className="info-row-value">{formatLocalDate(paciente.fecha_nacimiento)}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Edad</dt>
+                  <dd className="info-row-value">{edad !== null ? `${edad} años` : '—'}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Sexo</dt>
+                  <dd className="info-row-value">{paciente.sexo === 'M' ? 'Masculino' : paciente.sexo === 'F' ? 'Femenino' : paciente.sexo}</dd>
+                </div>
               </dl>
             </div>
-          </section>
+          </div>
 
           {/* Datos académicos */}
-          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                <GraduationCap className="w-4 h-4 text-primary" />
-              </span>
-              <h3 className="text-sm font-semibold text-gray-900">Datos Académicos</h3>
-            </div>
-            <div className="p-5">
-              <dl className="space-y-0 text-sm">
-                <Row label="No. Control" value={paciente.numero_control} />
-                <Row label="Carrera" value={paciente.carrera || '—'} />
-                <Row label="Semestre" value={`${paciente.semestre}°`} />
+          <div className="card-editorial page-enter page-enter-3">
+            <CardEditorialHeader
+              icon={<GraduationCap size={18} className="text-[#1B396A]" />}
+              title="Datos Académicos"
+            />
+            <div className="card-editorial-body">
+              <dl className="space-y-0">
+                <div className="info-row">
+                  <dt className="info-row-label">No. Control</dt>
+                  <dd className="info-row-value">{paciente.numero_control}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Carrera</dt>
+                  <dd className="info-row-value">{getCarreraNombre(paciente.carrera_id)}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Semestre</dt>
+                  <dd className="info-row-value">{paciente.semestre}°</dd>
+                </div>
               </dl>
             </div>
-          </section>
+          </div>
 
           {/* Datos de origen */}
-          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                <MapPin className="w-4 h-4 text-primary" />
-              </span>
-              <h3 className="text-sm font-semibold text-gray-900">Datos de Origen</h3>
-            </div>
-            <div className="p-5">
-              <dl className="space-y-0 text-sm">
-                <Row label="Localidad" value={paciente.localidad} />
-                <Row label="Municipio" value={paciente.municipio} />
-                <Row label="Religión" value={paciente.religion || '—'} />
+          <div className="card-editorial page-enter page-enter-4">
+            <CardEditorialHeader
+              icon={<MapPin size={18} className="text-[#1B396A]" />}
+              title="Datos de Origen"
+            />
+            <div className="card-editorial-body">
+              <dl className="space-y-0">
+                <div className="info-row">
+                  <dt className="info-row-label">Localidad</dt>
+                  <dd className="info-row-value">{paciente.localidad}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Municipio</dt>
+                  <dd className="info-row-value">{paciente.municipio}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Religión</dt>
+                  <dd className="info-row-value">{getReligionNombre(paciente.religion_id)}</dd>
+                </div>
               </dl>
             </div>
-          </section>
+          </div>
 
           {/* Datos familiares */}
-          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary">
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                <Users className="w-4 h-4 text-primary" />
-              </span>
-              <h3 className="text-sm font-semibold text-gray-900">Datos Familiares</h3>
-            </div>
-            <div className="p-5">
-              <dl className="space-y-0 text-sm">
-                <Row label="Con quién vive" value={paciente.con_quien_vive} />
-                <Row label="Nombre del Padre" value={paciente.nombre_padre || '—'} />
-                <Row label="Nombre de la Madre" value={paciente.nombre_madre || '—'} />
-                <Row label="Padres separados" value={paciente.padres_separados ? 'Sí' : 'No'} />
-                {paciente.padres_separados && paciente.anios_padres_separados && (
-                  <Row label="Años de separación" value={`${paciente.anios_padres_separados} años`} />
-                )}
+          <div className="card-editorial page-enter page-enter-5">
+            <CardEditorialHeader
+              icon={<Users size={18} className="text-[#1B396A]" />}
+              title="Datos Familiares"
+            />
+            <div className="card-editorial-body">
+              <dl className="space-y-0">
+                <div className="info-row">
+                  <dt className="info-row-label">Con quién vive</dt>
+                  <dd className="info-row-value">{paciente.con_quien_vive}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Nombre del Padre</dt>
+                  <dd className="info-row-value">{paciente.nombre_padre || '—'}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Nombre de la Madre</dt>
+                  <dd className="info-row-value">{paciente.nombre_madre || '—'}</dd>
+                </div>
+                <div className="info-row">
+                  <dt className="info-row-label">Padres separados</dt>
+                  <dd className="info-row-value">
+                    {paciente.padres_separados ? (
+                      <span className="text-amber-600">Sí{paciente.anios_padres_separados ? ` (${paciente.anios_padres_separados} años)` : ''}</span>
+                    ) : (
+                      'No'
+                    )}
+                  </dd>
+                </div>
               </dl>
             </div>
-          </section>
+          </div>
 
           {/* Información del registro */}
-          <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden border-l-4 border-l-primary lg:col-span-2">
-            <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
-                <ClipboardList className="w-4 h-4 text-primary" />
-              </span>
-              <h3 className="text-sm font-semibold text-gray-900">Información del Registro</h3>
-            </div>
-            <div className="p-5">
-              <dl className="space-y-0 text-sm">
-                <Row label="Fecha de registro" value={formatLocalDate(paciente.fecha_registro.split('T')[0])} />
+          <div className="card-editorial page-enter page-enter-6 lg:col-span-2">
+            <CardEditorialHeader
+              icon={<ClipboardList size={18} className="text-[#1B396A]" />}
+              title="Información del Registro"
+            />
+            <div className="card-editorial-body">
+              <dl className="space-y-0">
+                <div className="info-row">
+                  <dt className="info-row-label">Fecha de registro</dt>
+                  <dd className="info-row-value">{formatLocalDate(paciente.fecha_registro.split('T')[0])}</dd>
+                </div>
               </dl>
             </div>
-          </section>
+          </div>
+        </div>
+
+        {/* Separator */}
+        <div className="separator-decorator">
+          <div className="separator-line" />
+          <div className="separator-dot" />
+          <div className="separator-dot" />
+          <div className="separator-dot" />
+          <div className="separator-line" />
         </div>
 
         {/* Notas de evolución */}
-        <section className="bg-white rounded-xl shadow-[0_4px_20px_-2px_rgba(37,99,235,0.08)] border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-primary/5 to-primary/10 px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-primary" />
-              </span>
-              <h3 className="text-sm font-semibold text-gray-900">Notas de Evolución</h3>
+        <div className="card-editorial page-enter page-enter-1">
+          <div className="notes-section-header">
+            <div className="notes-section-title">
+              <div className="notes-section-icon">
+                <FileText size={20} className="text-[#1B396A]" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#2D2D2D]">Notas de Evolución</h3>
+                <p className="text-xs text-[#6B6560] mt-0.5">{notasData?.total ?? 0} sesiones registradas</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowResumenModal(true)}
                 className="btn-ai-glow inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
@@ -220,7 +334,6 @@ export default function PacienteDetallePage() {
                 <Brain size={14} />
                 <span>Resumen IA</span>
               </button>
-              <span className="text-xs text-secondary-400 bg-secondary-50 px-2 py-1 rounded-full">{notasData?.total ?? 0} notas</span>
             </div>
           </div>
 
@@ -233,24 +346,25 @@ export default function PacienteDetallePage() {
               />
             ) : (
               <div className="space-y-4">
-                {notas.map((nota) => (
+                {notas.map((nota, index) => (
                   <div
                     key={nota.id}
-                    className="p-4 rounded-lg hover:bg-surface transition-colors cursor-pointer border border-gray-100"
+                    className="note-card"
                     onClick={() => navigate(`/pacientes/${id}/notas/nueva?nota_id=${nota.id}&view=true`)}
+                    style={{ animationDelay: `${0.1 + index * 0.05}s` }}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-semibold flex-shrink-0">
+                      <div className="note-session-badge">
                         {nota.numero_sesion}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-[#2D2D2D]">
                             Sesión {nota.numero_sesion}
                           </p>
                           <Badge variant="info">{nota.impresion_diagnostica || '—'}</Badge>
                         </div>
-                        <p className="text-xs text-secondary-400 flex items-center gap-1 mb-2">
+                        <p className="text-xs text-[#6B6560] flex items-center gap-1.5 mb-2">
                           <Calendar size={12} />
                           {new Date(nota.fecha_hora).toLocaleDateString('es-MX', {
                             day: '2-digit',
@@ -259,14 +373,14 @@ export default function PacienteDetallePage() {
                           })}
                         </p>
                         {nota.nota_texto && (
-                          <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                          <p className="text-sm text-[#6B6560] line-clamp-2 mb-2">
                             {nota.nota_texto}
                           </p>
                         )}
                         {nota.transcripcion_entrevista && (
-                          <div className="mt-2 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <p className="text-xs font-medium text-gray-500 mb-1">Transcripción:</p>
-                            <p className="text-xs text-gray-600 line-clamp-3">
+                          <div className="mt-3 p-3 bg-[#FAFBFC] rounded-lg border border-[#E5E4E2]">
+                            <p className="text-xs font-medium text-[#6B6560] mb-1.5">Transcripción:</p>
+                            <p className="text-xs text-[#2D2D2D] line-clamp-3">
                               {nota.transcripcion_entrevista}
                             </p>
                           </div>
@@ -278,31 +392,36 @@ export default function PacienteDetallePage() {
               </div>
             )}
           </div>
-        </section>
+        </div>
 
         {/* Genograma */}
-        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <button
-            className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
-            onClick={() => setShowGenograma((v) => !v)}
-          >
+        <div className="genogram-container page-enter page-enter-2">
+          <div className="genogram-header">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center">
-                <GitBranch size={16} className="text-emerald-600" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(27,57,106,0.08) 0%, rgba(27,57,106,0.04) 100%)', border: '1px solid rgba(27,57,106,0.1)' }}>
+                <GitBranch size={18} className="text-[#1B396A]" />
               </div>
-              <h3 className="text-base font-semibold text-gray-800">Genograma Familiar</h3>
+              <div>
+                <h3 className="font-semibold text-[#2D2D2D]">Genograma Familiar</h3>
+                <p className="text-xs text-[#6B6560] mt-0.5">Diagrama de relaciones familiares</p>
+              </div>
             </div>
-            <span className="text-xs text-gray-400">{showGenograma ? '▲ Contraer' : '▼ Expandir'}</span>
-          </button>
+            <button
+              onClick={() => setShowGenograma((v) => !v)}
+              className="btn-action btn-action-outline text-xs py-1.5"
+            >
+              {showGenograma ? 'Contraer' : 'Expandir'}
+            </button>
+          </div>
           {showGenograma && (
-            <div className="px-6 pb-6">
+            <div className="p-6">
               <GenogramaEditor
                 pacienteId={pacienteId}
                 pacienteNombre={`${paciente.nombres} ${paciente.apellido_paterno}`}
               />
             </div>
           )}
-        </section>
+        </div>
       </main>
 
       {/* Resumen IA modal */}
@@ -471,14 +590,5 @@ export default function PacienteDetallePage() {
         </div>
       </Modal>
     </>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between items-center py-3 border-b border-gray-100 last:border-0">
-      <dt className="text-secondary-500 text-sm">{label}</dt>
-      <dd className="text-gray-900 font-medium text-sm text-right">{value}</dd>
-    </div>
   );
 }

@@ -73,7 +73,7 @@ export default function BienvenidaPage() {
         <div className="flex items-center gap-3 text-right">
           <div>
             <p className="text-sm font-bold text-[#1B396A]">
-              {user?.username === 'admin' ? 'Dr. Roberto Sánchez' : user?.username}
+              {user?.username}
             </p>
             <p className="text-xs text-gray-500 capitalize">
               {user?.rol?.nombre || 'Psicólogo Clínico'}

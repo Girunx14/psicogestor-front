@@ -91,6 +91,222 @@
   .card {
     @apply bg-white rounded-xl border border-secondary-100 p-6;
   }
+
+  /* ========================================
+     EDITORIAL DESIGN SYSTEM
+     Modern Editorial Clinical
+     ======================================== */
+
+  /* Editorial Card - Clean with subtle border */
+  .card-editorial {
+    @apply bg-white rounded-2xl border border-[#E5E4E2] p-0 overflow-hidden;
+    box-shadow: 0 1px 3px rgba(27, 57, 106, 0.04);
+    transition: all 0.3s ease;
+  }
+
+  .card-editorial:hover {
+    box-shadow: 0 8px 24px rgba(27, 57, 106, 0.08);
+    border-color: rgba(27, 57, 106, 0.15);
+  }
+
+  .card-editorial-header {
+    @apply px-5 py-4 border-b border-[#E5E4E2] flex items-center gap-3;
+    background: linear-gradient(180deg, #FAFBFC 0%, #FFFFFF 100%);
+  }
+
+  .card-editorial-icon {
+    @apply w-9 h-9 rounded-lg flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(27, 57, 106, 0.08) 0%, rgba(27, 57, 106, 0.04) 100%);
+    border: 1px solid rgba(27, 57, 106, 0.1);
+  }
+
+  .card-editorial-title {
+    @apply text-lg font-semibold text-[#1B396A];
+  }
+
+  .card-editorial-body {
+    @apply p-5;
+  }
+
+  /* Patient Header Hero */
+  .patient-header {
+    @apply bg-white rounded-2xl border border-[#E5E4E2] p-6 mb-6;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFC 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .patient-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #1B396A, #C9A86C, #1B396A);
+  }
+
+  .patient-avatar {
+    @apply w-16 h-16 rounded-full flex items-center justify-center text-white font-semibold text-xl;
+    background: linear-gradient(135deg, #1B396A 0%, #2D5A8A 100%);
+    box-shadow: 0 4px 12px rgba(27, 57, 106, 0.25);
+  }
+
+  .patient-name {
+    @apply text-2xl font-bold text-[#2D2D2D] leading-tight;
+  }
+
+  .patient-meta {
+    @apply flex items-center gap-3 mt-2 flex-wrap;
+  }
+
+  .patient-meta-item {
+    @apply inline-flex items-center gap-1.5 text-sm text-[#6B6560];
+  }
+
+  .patient-meta-divider {
+    @apply w-1 h-1 rounded-full bg-[#C9A86C];
+  }
+
+  /* Section Title */
+  .section-title {
+    @apply text-xl font-semibold text-[#1B396A] mb-4 flex items-center gap-3;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(27, 57, 106, 0.15), transparent);
+  }
+
+  /* Decorative Separator */
+  .separator-decorator {
+    @apply flex items-center gap-3 my-6;
+  }
+
+  .separator-line {
+    @apply flex-1 h-px bg-gradient-to-r from-transparent via-[#C9A86C]/30 to-transparent;
+  }
+
+  .separator-dot {
+    @apply w-1.5 h-1.5 rounded-full bg-[#C9A86C]/50;
+  }
+
+  /* Editorial Tag/Badge */
+  .tag-editorial {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+    background: rgba(27, 57, 106, 0.06);
+    border: 1px solid rgba(27, 57, 106, 0.1);
+    color: #1B396A;
+  }
+
+  .tag-accent {
+    background: rgba(201, 168, 108, 0.12);
+    border-color: rgba(201, 168, 108, 0.25);
+    color: #8B7355;
+  }
+
+  /* Info Row - Editorial */
+  .info-row {
+    @apply flex justify-between items-start py-3 border-b border-[#F0EFED] last:border-0;
+  }
+
+  .info-row-label {
+    @apply text-sm text-[#6B6560] font-medium;
+  }
+
+  .info-row-value {
+    @apply text-sm text-[#2D2D2D] font-semibold text-right;
+  }
+
+  /* Page Entrance Animations */
+  .page-enter {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: pageEnter 0.5s ease-out forwards;
+  }
+
+  @keyframes pageEnter {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .page-enter-1 { animation-delay: 0.05s; }
+  .page-enter-2 { animation-delay: 0.1s; }
+  .page-enter-3 { animation-delay: 0.15s; }
+  .page-enter-4 { animation-delay: 0.2s; }
+  .page-enter-5 { animation-delay: 0.25s; }
+  .page-enter-6 { animation-delay: 0.3s; }
+
+  /* Notes Card - Editorial */
+  .note-card {
+    @apply rounded-xl border border-[#E5E4E2] p-4 cursor-pointer;
+    background: #FFFFFF;
+    transition: all 0.25s ease;
+  }
+
+  .note-card:hover {
+    border-color: rgba(27, 57, 106, 0.2);
+    box-shadow: 0 4px 16px rgba(27, 57, 106, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .note-session-badge {
+    @apply w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold;
+    background: linear-gradient(135deg, #1B396A 0%, #2D5A8A 100%);
+    box-shadow: 0 2px 8px rgba(27, 57, 106, 0.2);
+  }
+
+  /* Genogram Container - Editorial */
+  .genogram-container {
+    @apply bg-white rounded-2xl border border-[#E5E4E2] overflow-hidden;
+  }
+
+  .genogram-header {
+    @apply px-5 py-4 border-b border-[#E5E4E2] flex items-center justify-between;
+    background: linear-gradient(180deg, #FAFBFC 0%, #FFFFFF 100%);
+  }
+
+  /* Action Button - Editorial */
+  .btn-action {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200;
+  }
+
+  .btn-action-primary {
+    @apply bg-[#1B396A] text-white hover:bg-[#2D5A8A] active:bg-[#1B396A];
+  }
+
+  .btn-action-outline {
+    @apply border border-[#E5E4E2] text-[#6B6560] hover:bg-[#FAFBFC] hover:border-[#1B396A] hover:text-[#1B396A];
+  }
+
+  .btn-action-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+
+  .btn-action-danger-outline {
+    @apply border border-red-200 text-red-600 hover:bg-red-50;
+  }
+
+  /* Notes Section Header - Editorial */
+  .notes-section-header {
+    @apply flex items-center justify-between px-5 py-4;
+    background: linear-gradient(180deg, #FAFBFC 0%, #FFFFFF 100%);
+    border-bottom: 1px solid #E5E4E2;
+  }
+
+  .notes-section-title {
+    @apply flex items-center gap-3;
+  }
+
+  .notes-section-icon {
+    @apply w-10 h-10 rounded-xl flex items-center justify-center;
+    background: linear-gradient(135deg, rgba(27, 57, 106, 0.08) 0%, rgba(27, 57, 106, 0.04) 100%);
+    border: 1px solid rgba(27, 57, 106, 0.1);
+  }
 }
 
 /* Print styles for PDF export */

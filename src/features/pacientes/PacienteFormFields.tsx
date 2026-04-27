@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Input from '@/components/ui/Input';
@@ -48,6 +48,7 @@ export default function PacienteFormFields({
     register,
     handleSubmit,
     watch,
+    control,
     formState: { errors },
   } = useForm<PacienteSchemaType>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -175,18 +176,32 @@ export default function PacienteFormFields({
               error={errors.numero_control?.message}
               {...register('numero_control')}
             />
-            <Select
-              label="Carrera"
-              placeholder="Selecciona una carrera"
-              error={errors.carrera_id?.message}
-              options={carreras.map((c) => ({ value: c.id, label: c.nombre }))}
-              {...register('carrera_id')}
+            <Controller
+              name="carrera_id"
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  label="Carrera"
+                  placeholder="Selecciona una carrera"
+                  error={errors.carrera_id?.message}
+                  options={carreras.map((c) => ({ value: c.id, label: c.nombre }))}
+                  value={value && value > 0 ? value : ''}
+                  onChange={(val) => onChange(val)}
+                />
+              )}
             />
-            <Select
-              label="Semestre"
-              error={errors.semestre?.message}
-              options={semestres.map((s) => ({ value: s, label: `${s}° Semestre` }))}
-              {...register('semestre')}
+            <Controller
+              name="semestre"
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  label="Semestre"
+                  error={errors.semestre?.message}
+                  options={semestres.map((s) => ({ value: s, label: `${s}° Semestre` }))}
+                  value={value ?? ''}
+                  onChange={(val) => onChange(val)}
+                />
+              )}
             />
           </div>
         </section>
@@ -205,12 +220,19 @@ export default function PacienteFormFields({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input label="Localidad" error={errors.localidad?.message} {...register('localidad')} />
             <Input label="Municipio" error={errors.municipio?.message} {...register('municipio')} />
-            <Select
-              label="Religión"
-              placeholder="Selecciona"
-              error={errors.religion_id?.message}
-              options={religiones.map((r) => ({ value: r.id, label: r.nombre }))}
-              {...register('religion_id')}
+            <Controller
+              name="religion_id"
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  label="Religión"
+                  placeholder="Selecciona"
+                  error={errors.religion_id?.message}
+                  options={religiones.map((r) => ({ value: r.id, label: r.nombre }))}
+                  value={value ?? ''}
+                  onChange={(val) => onChange(val)}
+                />
+              )}
             />
           </div>
         </section>

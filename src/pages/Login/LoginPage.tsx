@@ -36,8 +36,10 @@ export default function LoginPage() {
   const onSubmit = (data: LoginForm) => {
     setErrorMessage(null);
     if (isStudentFormat) {
+      const fechaNac = data.password;
+      const fechaFormatted = `${fechaNac.slice(4, 8)}-${fechaNac.slice(2, 4)}-${fechaNac.slice(0, 2)}`;
       loginPacienteMutation.mutate(
-        { numero_control: data.username, fecha_nacimiento: data.password },
+        { numero_control: data.username, fecha_nacimiento: fechaFormatted },
         {
           onSuccess: () => navigate('/portal', { replace: true }),
           onError: (error: unknown) => {
