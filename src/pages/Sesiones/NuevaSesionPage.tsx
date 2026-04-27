@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { Save, ArrowLeft, CalendarIcon, Hash } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
 import VoiceDictation from '@/features/sesiones/VoiceDictation';
 import { useCreateNota, useNotasPaciente, useUpdateNota } from '@/hooks/useNotas';
 import { usePaciente } from '@/hooks/usePacientes';

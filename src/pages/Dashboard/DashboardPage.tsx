@@ -71,17 +71,16 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900">
-                            {cita.fecha} — {cita.hora?.slice(0, 5)}
+                            {cita.fecha} — {cita.hora_inicio?.slice(0, 5)}
                           </p>
                           <p className="text-xs text-secondary-400">
                             {cita.tipo} · {cita.motivo || 'Sin motivo especificado'}
                           </p>
                         </div>
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          cita.estado === 'confirmada'
+                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${cita.estado === 'confirmada'
                             ? 'bg-blue-100 text-blue-700'
                             : 'bg-amber-100 text-amber-700'
-                        }`}>
+                          }`}>
                           {cita.estado === 'confirmada' ? 'Confirmada' : 'Pendiente'}
                         </span>
                       </div>
