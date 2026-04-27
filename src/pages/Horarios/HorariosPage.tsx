@@ -43,15 +43,24 @@ export default function HorariosPage() {
   });
 
   const onSubmit = (data: HorarioSchemaType) => {
+    // Calculamos hora_fin como 1 hora después de hora_inicio
+    const [hours, minutes] = data.hora.split(':');
+    const startHour = parseInt(hours, 10);
+    const endHour = (startHour + 1) % 24;
+    const hora_fin = `${endHour.toString().padStart(2, '0')}:${minutes}:00`;
+    const hora_inicio = data.hora + ':00';
+
     console.log('Submitting horario:', {
       fecha: data.fecha,
-      hora: data.hora + ':00',
+      hora_inicio,
+      hora_fin,
       tipo: data.tipo,
     });
     createMutation.mutate(
       {
         fecha: data.fecha,
-        hora: data.hora + ':00',
+        hora_inicio,
+        hora_fin,
         tipo: data.tipo,
       },
       {
@@ -122,12 +131,17 @@ export default function HorariosPage() {
                 </h3>
                 <div className="space-y-2">
                   {byDate[fecha]
-                    .sort((a, b) => a.hora.localeCompare(b.hora))
+                    .sort((a, b) => {
+                      const horaA = a.hora_inicio || (a as any).hora || '';
+                      const horaB = b.hora_inicio || (b as any).hora || '';
+                      return horaA.localeCompare(horaB);
+                    })
                     .map((h) => (
                       <div key={h.id} className="flex items-center gap-3 p-3 rounded-lg bg-surface">
                         <div className="flex-1 flex items-center gap-3">
                           <span className="text-sm font-medium text-gray-900">
-                            {h.hora.slice(0, 5)}
+                            {(h.hora_inicio || (h as any).hora)?.slice(0, 5) || '--:--'} 
+                            {h.hora_fin ? ` - ${h.hora_fin.slice(0, 5)}` : ''}
                           </span>
                           <span className="text-xs text-secondary-400 flex items-center gap-1">
                             {h.tipo === 'virtual' ? <Video size={12} /> : <MapPin size={12} />}

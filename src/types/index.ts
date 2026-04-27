@@ -120,7 +120,8 @@ export interface Horario {
   id: number;
   psicologo_id: number;
   fecha: string; // ISO date
-  hora: string; // HH:MM:SS
+  hora_inicio: string; // HH:MM:SS
+  hora_fin: string; // HH:MM:SS
   tipo: TipoHorario;
   disponible: boolean;
   creado_en: string;
@@ -128,7 +129,8 @@ export interface Horario {
 
 export interface HorarioCreate {
   fecha: string;
-  hora: string;
+  hora_inicio: string;
+  hora_fin: string;
   tipo: TipoHorario;
 }
 
@@ -156,7 +158,8 @@ export interface Cita {
   actualizado_en: string;
   // Enriched from horario
   fecha: string;
-  hora: string;
+  hora_inicio: string;
+  hora_fin: string;
 }
 
 export interface CitaCreate {

@@ -20,27 +20,40 @@ export default function BienvenidaPage() {
     navigate('/login', { replace: true });
   };
 
-  const today = new Date().toISOString().split('T')[0];
-  
+  const today = useMemo(() => {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }, []);
+
   const agendaHoy = useMemo(() => {
     if (!citas || !Array.isArray(citas)) return [];
-    
+
     const patients = pacientesData?.items || [];
-    
+
     return citas
       .filter((c) => c.fecha === today)
       .sort((a, b) => {
-        const timeA = a.hora || '';
-        const timeB = b.hora || '';
+        const timeA = a.hora_inicio || '';
+        const timeB = b.hora_inicio || '';
         return timeA.localeCompare(timeB);
       })
       .map((cita) => {
         const paciente = patients.find((p) => p.id === cita.paciente_id);
+        
+        const h = cita.hora_inicio || '00:00:00';
+        const [hourStr, minStr] = h.split(':');
+        const hourNum = parseInt(hourStr, 10) || 0;
+        const ampm = hourNum >= 12 ? 'PM' : 'AM';
+        const hour12 = hourNum % 12 || 12;
+        const horaFormateada = `${hour12}:${minStr || '00'}`;
+
         return {
           ...cita,
           pacienteNombre: paciente ? `${paciente.nombres} ${paciente.apellido_paterno} ${paciente.apellido_materno || ''}` : 'Paciente no encontrado',
           pacienteCarrera: paciente?.carrera || 'No especificada',
           pacienteSemestre: paciente?.semestre || 'N/A',
+          horaFormateada,
+          ampm
         };
       });
   }, [citas, today, pacientesData]);
@@ -49,7 +62,7 @@ export default function BienvenidaPage() {
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* Header Superior */}
       <header className="w-full bg-white px-8 py-4 flex justify-between items-center relative z-10 border-b border-gray-100">
-        <button 
+        <button
           onClick={toggleSidebar}
           className="p-2 text-gray-400 hover:text-[#1B396A] hover:bg-gray-50 rounded-lg transition-all"
           title="Alternar Menú"
@@ -69,7 +82,7 @@ export default function BienvenidaPage() {
           <div className="w-10 h-10 rounded-full bg-[#1B396A] flex items-center justify-center text-white border-2 border-gray-100 overflow-hidden">
             <User size={20} />
           </div>
-          <button 
+          <button
             onClick={handleLogout}
             className="ml-4 p-2 text-gray-400 hover:text-red-500 transition-colors"
             title="Cerrar Sesión"
@@ -85,7 +98,7 @@ export default function BienvenidaPage() {
           {/* Logo Izquierdo - TecNM */}
           <div className="hidden md:block flex-shrink-0">
             <div className="w-40 h-auto flex items-center justify-center">
-               <img src="/images/logo-tecnm.png" alt="Logo TecNM" className="w-full h-auto object-contain" />
+              <img src="/images/logo-tecnm.png" alt="Logo TecNM" className="w-full h-auto object-contain" />
             </div>
           </div>
 
@@ -100,7 +113,7 @@ export default function BienvenidaPage() {
             <p className="text-sm font-medium text-gray-500 uppercase tracking-[0.2em] mb-6">
               DEPARTAMENTO DE DESARROLLO ACADÉMICO
             </p>
-            
+
             <div className="w-24 h-1 bg-[#1B396A] mx-auto mb-8 rounded-full"></div>
 
             <h3 className="text-2xl md:text-3xl font-bold text-[#1B396A]" style={{ fontFamily: 'Outfit, sans-serif' }}>
@@ -123,7 +136,7 @@ export default function BienvenidaPage() {
           {/* Agenda Header */}
           <div className="px-8 py-6 flex items-center justify-between border-b border-gray-50">
             <h4 className="text-xl font-bold text-[#1B396A]">Agenda del Día</h4>
-            <button 
+            <button
               onClick={() => navigate('/citas')}
               className="flex items-center gap-2 text-sm font-semibold text-[#1B396A] hover:gap-3 transition-all"
             >
@@ -143,9 +156,9 @@ export default function BienvenidaPage() {
                   <Calendar size={24} className="text-gray-300" />
                 </div>
                 <p className="text-gray-400 font-medium">No hay citas programadas para hoy.</p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="mt-4"
                   onClick={() => navigate('/citas')}
                 >
@@ -154,25 +167,18 @@ export default function BienvenidaPage() {
               </div>
             ) : (
               agendaHoy.map((cita) => (
-                <div 
-                  key={cita.id} 
-                  className={`flex items-center gap-6 p-6 rounded-2xl transition-all group border-2 ${
-                    cita.estado === 'confirmada' ? 'border-[#1B396A] bg-[#F8FAFC]' : 'border-transparent bg-gray-50/50 hover:bg-gray-50'
-                  }`}
+                <div
+                  key={cita.id}
+                  className={`flex items-center gap-6 p-6 rounded-2xl transition-all group border-2 ${cita.estado === 'confirmada' ? 'border-[#1B396A] bg-[#F8FAFC]' : 'border-transparent bg-gray-50/50 hover:bg-gray-50'
+                    }`}
                 >
                   {/* Time Section */}
                   <div className="flex flex-col items-center justify-center min-w-[80px] border-r border-gray-200 pr-6">
                     <span className="text-2xl font-bold text-[#1B396A]">
-                      {(() => {
-                         const h = cita.hora || '00:00:00';
-                         return h.slice(0, 5);
-                      })()}
+                      {cita.horaFormateada}
                     </span>
                     <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      {(() => {
-                         const h = cita.hora || '00:00:00';
-                         return parseInt(h.split(':')[0]) >= 12 ? 'PM' : 'AM';
-                      })()}
+                      {cita.ampm}
                     </span>
                   </div>
 
@@ -188,16 +194,15 @@ export default function BienvenidaPage() {
 
                   {/* Status & Actions */}
                   <div className="flex items-center gap-4">
-                    <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${
-                      cita.estado === 'confirmada' 
-                        ? 'bg-emerald-100 text-emerald-700' 
-                        : cita.estado === 'completada'
+                    <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${cita.estado === 'confirmada'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : cita.estado === 'completada'
                         ? 'bg-blue-100 text-blue-700'
                         : 'bg-[#E8EDF4] text-[#1B396A]'
-                    }`}>
+                      }`}>
                       {cita.estado.charAt(0).toUpperCase() + cita.estado.slice(1)}
                     </span>
-                    
+
                     {cita.estado === 'confirmada' ? (
                       <button className="w-10 h-10 rounded-full bg-[#1B396A] text-white flex items-center justify-center shadow-lg shadow-[#1B396A]/20 hover:scale-110 transition-transform">
                         <Play size={18} fill="currentColor" />
@@ -216,40 +221,40 @@ export default function BienvenidaPage() {
 
         {/* Bottom Navigation Cards (Alternative to just the agenda) */}
         {user?.rol?.nombre !== 'desarrollo_academico' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          <button
-            onClick={() => navigate('/pacientes')}
-            className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
-          >
-            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
-              <User size={24} />
-            </div>
-            <h6 className="font-bold text-[#1B396A] mb-1">Expedientes</h6>
-            <p className="text-xs text-gray-400">Gestión de pacientes y notas</p>
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+            <button
+              onClick={() => navigate('/pacientes')}
+              className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
+            >
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+                <User size={24} />
+              </div>
+              <h6 className="font-bold text-[#1B396A] mb-1">Expedientes</h6>
+              <p className="text-xs text-gray-400">Gestión de pacientes y notas</p>
+            </button>
 
-          <button
-            onClick={() => navigate('/estadisticas')}
-            className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
-          >
-            <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-4">
-              <Calendar size={24} />
-            </div>
-            <h6 className="font-bold text-[#1B396A] mb-1">Reportes</h6>
-            <p className="text-xs text-gray-400">Análisis y estadísticas mensuales</p>
-          </button>
+            <button
+              onClick={() => navigate('/estadisticas')}
+              className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
+            >
+              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-4">
+                <Calendar size={24} />
+              </div>
+              <h6 className="font-bold text-[#1B396A] mb-1">Estadísticas</h6>
+              <p className="text-xs text-gray-400">Análisis y estadísticas mensuales</p>
+            </button>
 
-          <button
-            onClick={() => navigate('/horarios')}
-            className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
-          >
-            <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
-              <MoreVertical size={24} />
-            </div>
-            <h6 className="font-bold text-[#1B396A] mb-1">Configuración</h6>
-            <p className="text-xs text-gray-400">Gestión de horarios y perfiles</p>
-          </button>
-        </div>
+            <button
+              onClick={() => navigate('/horarios')}
+              className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
+            >
+              <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-4">
+                <MoreVertical size={24} />
+              </div>
+              <h6 className="font-bold text-[#1B396A] mb-1">Configuración de Horarios</h6>
+              <p className="text-xs text-gray-400">Gestión de horarios y perfiles</p>
+            </button>
+          </div>
         )}
       </main>
     </div>
