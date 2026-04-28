@@ -14,6 +14,8 @@ export function usePaciente(id: string) {
     queryKey: ['paciente', id],
     queryFn: () => pacientesApi.getById(id),
     enabled: !!id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -32,9 +34,10 @@ export function useUpdatePaciente(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: PacienteUpdate) => pacientesApi.update(id, data),
-    onSuccess: (updatedPaciente) => {
+    onSuccess: async (updatedPaciente) => {
       queryClient.setQueryData(['paciente', id], updatedPaciente);
-      queryClient.invalidateQueries({ queryKey: ['pacientes'] });
+      await queryClient.invalidateQueries({ queryKey: ['paciente', id] });
+      await queryClient.invalidateQueries({ queryKey: ['pacientes'] });
     },
   });
 }

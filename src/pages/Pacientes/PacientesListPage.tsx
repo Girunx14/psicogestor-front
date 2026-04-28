@@ -6,6 +6,7 @@ import DataTable from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
 import { useUIStore } from '@/store/uiStore';
 import { usePacientes } from '@/hooks/usePacientes';
+import { useCatalogos } from '@/hooks/useCatalogos';
 import type { PacienteListItem } from '@/types';
 
 export default function PacientesListPage() {
@@ -19,6 +20,13 @@ export default function PacientesListPage() {
     per_page: 20,
     ...(search ? { buscar: search } : {}),
   });
+
+  const { data: catalogos } = useCatalogos();
+  const carreras = catalogos?.carreras ?? [];
+
+  const getCarreraNombre = (carreraId: number) => {
+    return carreras.find(c => c.id === carreraId)?.nombre || 'No registrada';
+  };
 
   const handleSearch = useCallback((value: string) => {
     setSearch(value);
@@ -59,7 +67,7 @@ export default function PacientesListPage() {
       header: <span className="text-xs font-bold tracking-widest text-[#1A365D]">CARRERA</span>,
       render: (p: PacienteListItem) => (
         <span className="inline-flex items-center px-2.5 py-1 rounded bg-blue-100/50 text-[#1A365D] text-xs font-medium border border-blue-200">
-          {p.carrera || 'No registrada'}
+          {getCarreraNombre(p.carrera_id)}
         </span>
       ),
     },

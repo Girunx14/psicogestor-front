@@ -11,12 +11,13 @@ export default function PacienteEditarPage() {
   const { data: paciente, isLoading } = usePaciente(pacienteId);
   const updateMutation = useUpdatePaciente(pacienteId);
 
-  const handleSubmit = (data: PacienteCreate) => {
-    updateMutation.mutate(data, {
-      onSuccess: () => {
-        navigate(`/pacientes/${id}`);
-      },
-    });
+  const handleSubmit = async (data: PacienteCreate) => {
+    try {
+      await updateMutation.mutateAsync(data);
+      navigate(`/pacientes/${id}`);
+    } catch (error) {
+      console.error('Error al actualizar paciente:', error);
+    }
   };
 
   if (isLoading || !paciente) {

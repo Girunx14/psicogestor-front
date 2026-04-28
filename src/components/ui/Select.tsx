@@ -17,6 +17,17 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, options, placeholder, className, id, ...props }, ref) => {
     const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
+    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const val = e.target.value;
+      const numVal = Number(val);
+      const finalVal = Number.isInteger(numVal) && val !== '' && !isNaN(numVal) ? numVal : val;
+      if (props.onChange) {
+        props.onChange(finalVal as unknown as React.ChangeEvent<HTMLSelectElement>);
+      }
+    };
+
+    const displayValue = props.value !== undefined && props.value !== null ? String(props.value) : '';
+
     return (
       <div className="w-full">
         {label && (
@@ -28,7 +39,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={clsx('input-base', error && 'input-error', className)}
-          {...props}
+          value={displayValue}
+          onChange={handleChange}
         >
           {placeholder && (
             <option value="" disabled>
@@ -36,7 +48,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           )}
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={String(opt.value)}>
               {opt.label}
             </option>
           ))}
