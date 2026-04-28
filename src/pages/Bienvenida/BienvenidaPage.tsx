@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useCitas } from '@/hooks/useCitas';
 import { usePacientes } from '@/hooks/usePacientes';
 import { useUIStore } from '@/store/uiStore';
-import { Calendar, ChevronRight, User, MoreVertical, Play, LogOut, Menu } from 'lucide-react';
+import { Calendar, ChevronRight, User, MoreVertical, LogOut, Menu } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
 export default function BienvenidaPage() {
