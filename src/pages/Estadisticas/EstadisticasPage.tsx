@@ -4,12 +4,19 @@ import { Activity, Menu } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
 import { useUIStore } from '@/store/uiStore';
 import { usePacientes } from '@/hooks/usePacientes';
+import { useCatalogos } from '@/hooks/useCatalogos';
 
 const COLORS = ['#1A365D', '#4A5568', '#A0AEC0', '#CBD5E1', '#E2E8F0', '#F1F5F9'];
 
 export default function EstadisticasPage() {
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const { data: pacientesData, isLoading } = usePacientes({ page: 1, per_page: 500 });
+  const { data: catalogos } = useCatalogos();
+  const carreras = catalogos?.carreras ?? [];
+
+  const getCarreraNombre = (carreraId: number) => {
+    return carreras.find(c => c.id === carreraId)?.nombre || 'No registrada';
+  };
 
   const stats = useMemo(() => {
     const pacientesList = pacientesData?.items ?? [];
@@ -81,7 +88,7 @@ export default function EstadisticasPage() {
     // 5. Carreras
     const carreraMap: Record<string, number> = {};
     pList.forEach((p) => {
-      const c = p.carrera || 'No registrada';
+      const c = getCarreraNombre(p.carrera_id);
       carreraMap[c] = (carreraMap[c] || 0) + 1;
     });
     const carreraData = Object.keys(carreraMap)
@@ -93,7 +100,7 @@ export default function EstadisticasPage() {
     const pacientesMes = pList.filter(p => new Date(p.fecha_registro).getMonth() === currMonth).length;
 
     return { total, porcentajeDivorciados, sexoData, semestreData, edadData, carreraData, promedioEdad, pacientesMes };
-  }, [pacientesData?.items]);
+  }, [pacientesData?.items, catalogos]);
 
   return (
     <>

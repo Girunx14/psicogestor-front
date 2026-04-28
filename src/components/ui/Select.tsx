@@ -17,16 +17,11 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, options, placeholder, className, id, ...props }, ref) => {
     const selectId = id || label?.toLowerCase().replace(/\s+/g, '-');
 
-    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const val = e.target.value;
-      const numVal = Number(val);
-      const finalVal = Number.isInteger(numVal) && val !== '' && !isNaN(numVal) ? numVal : val;
-      if (props.onChange) {
-        props.onChange(finalVal as unknown as React.ChangeEvent<HTMLSelectElement>);
-      }
-    };
-
-    const displayValue = props.value !== undefined && props.value !== null ? String(props.value) : '';
+    // Handle null value which can be passed by react-hook-form
+    const selectProps = { ...props };
+    if (selectProps.value === null) {
+      selectProps.value = '';
+    }
 
     return (
       <div className="w-full">
@@ -39,8 +34,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={clsx('input-base', error && 'input-error', className)}
-          value={displayValue}
-          onChange={handleChange}
+          {...selectProps}
         >
           {placeholder && (
             <option value="" disabled>

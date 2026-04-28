@@ -76,7 +76,10 @@ export default function NuevaSesionPage() {
   const errorMessage = (createNotaMutation.error as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
 
   const onSubmit = async (data: NotaSchemaType) => {
-    const fechaHoraISO = new Date().toISOString();
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(now.getTime() - tzOffset).toISOString().slice(0, -1);
+    const fechaHoraISO = localISOTime;
 
     if (notaId) {
       updateNotaMutation.mutate(
