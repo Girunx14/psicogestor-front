@@ -259,10 +259,10 @@ export default function BienvenidaPage() {
               onClick={() => navigate('/pacientes')}
               className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
             >
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-900 rounded-2xl flex items-center justify-center mb-4">
                 <User size={24} />
               </div>
-              <h6 className="font-bold text-[#1B396A] mb-1">Expedientes</h6>
+              <h6 className="text-xl font-bold text-[#1B396A] mb-1">Expedientes</h6>
               <p className="text-xs text-gray-400">Gestión de pacientes y notas</p>
             </button>
 
@@ -270,7 +270,7 @@ export default function BienvenidaPage() {
               onClick={() => navigate('/estadisticas')}
               className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
             >
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-900 rounded-2xl flex items-center justify-center mb-4">
                 <Calendar size={24} />
               </div>
               <h6 className="font-bold text-[#1B396A] mb-1">Estadísticas</h6>
@@ -281,7 +281,7 @@ export default function BienvenidaPage() {
               onClick={() => navigate('/horarios')}
               className="p-6 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all text-left"
             >
-              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4">
+              <div className="w-12 h-12 bg-blue-50 text-blue-900 rounded-2xl flex items-center justify-center mb-4">
                 <MoreVertical size={24} />
               </div>
               <h6 className="font-bold text-[#1B396A] mb-1">Configuración de Horarios</h6>

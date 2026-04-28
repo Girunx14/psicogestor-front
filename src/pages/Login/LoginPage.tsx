@@ -31,13 +31,26 @@ export default function LoginPage() {
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) });
 
   const usernameValue = watch('username', '');
-  const isStudentFormat = /^\d{8}$/.test(usernameValue);
+  // El número de control puede tener 7 u 8 dígitos
+  const isStudentFormat = /^\d{7,8}$/.test(usernameValue);
+
+  const formatBirthdate = (dateStr: string) => {
+    // Convierte DDMMYYYY a YYYY-MM-DD
+    if (dateStr.length !== 8) return dateStr;
+    const day = dateStr.slice(0, 2);
+    const month = dateStr.slice(2, 4);
+    const year = dateStr.slice(4, 8);
+    return `${year}-${month}-${day}`;
+  };
 
   const onSubmit = (data: LoginForm) => {
     setErrorMessage(null);
     if (isStudentFormat) {
       loginPacienteMutation.mutate(
-        { numero_control: data.username, fecha_nacimiento: data.password },
+        { 
+          numero_control: data.username, 
+          fecha_nacimiento: formatBirthdate(data.password) 
+        },
         {
           onSuccess: () => navigate('/portal', { replace: true }),
           onError: (error: unknown) => {
@@ -210,7 +223,7 @@ export default function LoginPage() {
 
         {/* ── Hint ── */}
         <p className="mt-5 text-center text-xs text-gray-400 leading-relaxed">
-          Si eres estudiante, ingresa tu número de control de 8 dígitos y tu fecha de
+          Si eres estudiante, ingresa tu número de control de 7 u 8 dígitos y tu fecha de
           nacimiento en formato <strong className="text-gray-500">DDMMYYYY</strong>.
         </p>
       </div>
