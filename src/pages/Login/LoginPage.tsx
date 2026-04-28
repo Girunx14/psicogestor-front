@@ -47,9 +47,9 @@ export default function LoginPage() {
     setErrorMessage(null);
     if (isStudentFormat) {
       loginPacienteMutation.mutate(
-        { 
-          numero_control: data.username, 
-          fecha_nacimiento: formatBirthdate(data.password) 
+        {
+          numero_control: data.username,
+          fecha_nacimiento: formatBirthdate(data.password)
         },
         {
           onSuccess: () => navigate('/portal', { replace: true }),
@@ -148,11 +148,11 @@ export default function LoginPage() {
           {/* Username */}
           <div className="flex flex-col gap-1.5">
             <label htmlFor="login-username" className="text-xs font-semibold text-gray-700">
-              {isStudentFormat ? 'Número de Control' : 'Número de Control'}
+              {isStudentFormat ? 'Número de Control' : 'Usuario'}
             </label>
             <input
               id="login-username"
-              placeholder={isStudentFormat ? 'Ej: 22300608' : 'Número de Control'}
+              placeholder={isStudentFormat ? 'Ej: 22300608' : 'Usuario'}
               autoComplete="username"
               className={`w-full h-11 px-3.5 rounded-lg border bg-gray-50 text-sm text-gray-900 placeholder-gray-400 outline-none transition
                 focus:border-[#1B3A6B] focus:ring-2 focus:ring-[#1B3A6B]/15 focus:bg-white
