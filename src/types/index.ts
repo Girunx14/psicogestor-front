@@ -233,15 +233,72 @@ export interface UsuarioUpdate {
 // Estadísticas (por paciente)
 // ──────────────────────────────────────────────────
 
+export interface DiagnosticoHistorial {
+  numero_sesion: number;
+  fecha: string;
+  diagnostico: string | null;
+}
+
+export interface EstadisticasCitas {
+  total: number;
+  pendientes: number;
+  confirmadas: number;
+  completadas: number;
+  canceladas: number;
+  proxima_cita_fecha: string | null;
+  proxima_cita_tipo: string | null;
+}
+
 export interface EstadisticasPaciente {
-  // The backend schema is flexible; we type what we expect
+  paciente_id: string;
   total_sesiones: number;
-  frecuencia: string;
-  diagnosticos: string[];
-  diagnostico_frecuente: string;
-  estado_citas: Record<string, number>;
-  proxima_cita: Cita | null;
-  [key: string]: unknown;
+  fecha_primera_sesion: string | null;
+  fecha_ultima_sesion: string | null;
+  dias_desde_ultima_sesion: number | null;
+  frecuencia_promedio_dias: number | null;
+  historial_diagnosticos: DiagnosticoHistorial[];
+  diagnostico_mas_frecuente: string | null;
+  citas: EstadisticasCitas;
+}
+
+// ──────────────────────────────────────────────────
+// Urgencias
+// ──────────────────────────────────────────────────
+
+/** Urgencia vista por el paciente */
+export interface UrgenciaActiva {
+  id: number;
+  estado: 'pendiente' | 'confirmada' | 'cancelada';
+  motivo: string | null;
+  enlace_videollamada: string | null;
+  motivo_rechazo: string | null;
+  creado_en: string;
+  psicologo_nombre: string | null;
+}
+
+/** Urgencia vista por el psicólogo */
+export interface UrgenciaPendiente {
+  id: number;
+  estado: 'pendiente' | 'confirmada' | 'cancelada';
+  motivo: string | null;
+  creado_en: string;
+  paciente_nombre: string;
+  paciente_numero_control: string | null;
+}
+
+/** Request para solicitar urgencia */
+export interface SolicitarUrgenciaRequest {
+  motivo_consulta: string;
+}
+
+/** Request para aceptar urgencia */
+export interface AceptarUrgenciaRequest {
+  enlace_videollamada: string;
+}
+
+/** Request para rechazar urgencia */
+export interface RechazarUrgenciaRequest {
+  motivo_rechazo: string;
 }
 
 // ──────────────────────────────────────────────────

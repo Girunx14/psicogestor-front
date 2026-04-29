@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { useAuthStore } from '@/store/authStore';
+import axiosClient from './axiosClient';
 
 export interface GenogramaNode {
   id: string;
@@ -35,27 +34,16 @@ export interface GenogramaResponse {
   actualizado_en: string | null;
 }
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
-
-function authHeaders() {
-  const token = useAuthStore.getState().token;
-  return { Authorization: `Bearer ${token}` };
-}
-
 export const genogramaApi = {
   get: async (pacienteId: string): Promise<GenogramaResponse> => {
-    const { data } = await axios.get(
-      `${API_BASE}/api/v1/genogramas/paciente/${pacienteId}`,
-      { headers: authHeaders() }
-    );
+    const { data } = await axiosClient.get(`/genogramas/paciente/${pacienteId}`);
     return data;
   },
 
   save: async (pacienteId: string, datos: GenogramaDatos): Promise<GenogramaResponse> => {
-    const { data } = await axios.put(
-      `${API_BASE}/api/v1/genogramas/paciente/${pacienteId}`,
+    const { data } = await axiosClient.put(
+      `/genogramas/paciente/${pacienteId}`,
       datos,
-      { headers: authHeaders() }
     );
     return data;
   },

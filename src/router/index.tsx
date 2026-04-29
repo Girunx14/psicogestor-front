@@ -25,7 +25,7 @@ export const router = createBrowserRouter([
   {
     path: '/portal',
     element: (
-      <ProtectedRoute>
+      <ProtectedRoute requiredRole="paciente">
         <PatientLayout />
       </ProtectedRoute>
     ),

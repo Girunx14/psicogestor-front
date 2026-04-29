@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
 import { User, Menu } from 'lucide-react';
+import UrgenciaNotification from './UrgenciaNotification';
 
 interface TopbarProps {
   title: string;
@@ -31,17 +32,21 @@ export default function Topbar({ title, subtitle }: TopbarProps) {
           </div>
         </div>
 
-        {/* User info */}
-        {user && (
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center">
-              <User size={16} className="text-primary" />
+        {/* User info & Notifications */}
+        <div className="flex items-center gap-4">
+          <UrgenciaNotification />
+          
+          {user && (
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-primary-50 flex items-center justify-center">
+                <User size={16} className="text-primary" />
+              </div>
+              <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                {user.username}
+              </span>
             </div>
-            <span className="text-sm font-medium text-gray-700 hidden sm:block">
-              {user.username}
-            </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

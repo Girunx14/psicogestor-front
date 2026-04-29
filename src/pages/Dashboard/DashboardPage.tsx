@@ -3,7 +3,9 @@ import Topbar from '@/components/layout/Topbar';
 import StatCard from '@/components/ui/StatCard';
 import Card from '@/components/ui/Card';
 import { usePacientes } from '@/hooks/usePacientes';
-import { useCitas } from '@/hooks/useCitas';
+import { useCitas, useUrgenciasPendientes } from '@/hooks/useCitas';
+import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
+import { useNavigate } from 'react-router-dom';
 
 export default function DashboardPage() {
   const { data: pacientesData, isLoading: loadingPacientes } = usePacientes({ page: 1, per_page: 1 });
@@ -15,7 +17,10 @@ export default function DashboardPage() {
   const citasConfirmadas = citasList.filter((c) => c.estado === 'confirmada').length;
   const citasCompletadas = citasList.filter((c) => c.estado === 'completada').length;
 
-  const isLoading = loadingPacientes || loadingCitas;
+  const navigate = useNavigate();
+  const { data: urgenciasPendientes, isLoading: loadingUrgencias, isError: hasUrgenciasError } = useUrgenciasPendientes();
+
+  const isLoading = loadingPacientes || loadingCitas || loadingUrgencias;
 
   return (
     <>
@@ -27,6 +32,16 @@ export default function DashboardPage() {
           </div>
         ) : (
           <>
+            {/* Urgencias */}
+            <UrgenciasPanel
+              urgencias={urgenciasPendientes}
+              isLoading={loadingUrgencias}
+              hasError={hasUrgenciasError}
+              onAceptar={() => navigate('/citas')}
+              onRechazar={() => navigate('/citas')}
+              isAceptando={false}
+              isRechazando={false}
+            />
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard

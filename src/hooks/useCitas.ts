@@ -1,6 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/api/citasApi';
-import type { CitaCreate, CitaUpdateEstado, CitaUrgenciaCreate } from '@/types';
+import type {
+  CitaCreate,
+  CitaUpdateEstado,
+  CitaUrgenciaCreate,
+  SolicitarUrgenciaRequest,
+  AceptarUrgenciaRequest,
+  RechazarUrgenciaRequest,
+} from '@/types';
 
 export function useCitas(params: Record<string, unknown> = {}) {
   return useQuery({
@@ -69,21 +76,74 @@ export function useCreateUrgencia() {
   });
 }
 
+// ──────────────────────────────────────────────────
+// Urgencias (nuevos)
+// ──────────────────────────────────────────────────
+
+/** Hook para el paciente: poll urgencia activa cada 15 segundos */
 export function useUrgenciaActiva() {
   return useQuery({
     queryKey: ['urgencia-activa'],
-    queryFn: () => citasApi.getUrgenciaActiva(),
-    refetchInterval: 15000, // Poll every 15 seconds
+    queryFn: () => citasApi.obtenerUrgenciaActiva(),
+    refetchInterval: 15000,
+    staleTime: 0,
   });
 }
 
-export function useSolicitarEmergencia() {
+/** Hook para solicitar urgencia (mutación del paciente) */
+export function useSolicitarUrgencia() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => citasApi.solicitarEmergencia(),
+    mutationFn: (data: SolicitarUrgenciaRequest) => citasApi.solicitarUrgencia(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mis-citas'] });
+      queryClient.invalidateQueries({ queryKey: ['urgencia-activa'] });
+    },
+  });
+}
+
+/** Hook para el psicólogo: listar urgencias pendientes con polling */
+export function useUrgenciasPendientes() {
+  return useQuery({
+    queryKey: ['urgencias-pendientes'],
+    queryFn: () => citasApi.listarUrgenciasPendientes(),
+    refetchInterval: 15000,
+    staleTime: 0,
+    retry: false,
+  });
+}
+
+/** Hook para aceptar urgencia */
+export function useAceptarUrgencia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ citaId, data }: { citaId: number; data: AceptarUrgenciaRequest }) =>
+      citasApi.aceptarUrgencia(citaId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['urgencias-pendientes'] });
       queryClient.invalidateQueries({ queryKey: ['citas'] });
+    },
+  });
+}
+
+/** Hook para rechazar urgencia */
+export function useRechazarUrgencia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ citaId, data }: { citaId: number; data: RechazarUrgenciaRequest }) =>
+      citasApi.rechazarUrgencia(citaId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['urgencias-pendientes'] });
+    },
+  });
+}
+
+/** Hook para que el paciente cancele su propia urgencia */
+export function useCancelarUrgencia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (citaId: number) => citasApi.cancelarUrgenciaPaciente(citaId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['urgencia-activa'] });
     },
   });
 }

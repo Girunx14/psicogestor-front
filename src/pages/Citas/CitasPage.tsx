@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Plus, ChevronLeft, ChevronRight, Video, MapPin } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Video, MapPin, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -7,13 +7,15 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
-import { useCitas, useCreateCita, useUpdateEstadoCita } from '@/hooks/useCitas';
+import { useCitas, useCreateCita, useUpdateEstadoCita, useUrgenciasPendientes, useAceptarUrgencia, useRechazarUrgencia } from '@/hooks/useCitas';
 import { useHorarios } from '@/hooks/useHorarios';
 import { usePacientes } from '@/hooks/usePacientes';
-import type { Cita, EstadoCita } from '@/types';
+import type { Cita, EstadoCita, UrgenciaPendiente } from '@/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
+import { tiempoTranscurrido, formatDate } from '@/lib/utils';
 
 const citaSchema = z.object({
   horario_id: z.coerce.number().min(1, 'Selecciona un horario'),
@@ -23,6 +25,18 @@ const citaSchema = z.object({
 });
 
 type CitaSchemaType = z.infer<typeof citaSchema>;
+
+const aceptarUrgenciaSchema = z.object({
+  enlace_videollamada: z.string().min(1, 'El enlace es requerido').url('Ingresa una URL válida'),
+});
+
+type AceptarUrgenciaSchemaType = z.infer<typeof aceptarUrgenciaSchema>;
+
+const rechazarUrgenciaSchema = z.object({
+  motivo_rechazo: z.string().min(5, 'Ingresa el motivo del rechazo'),
+});
+
+type RechazarUrgenciaSchemaType = z.infer<typeof rechazarUrgenciaSchema>;
 
 const estadoBadge: Record<EstadoCita, { label: string; variant: 'info' | 'success' | 'danger' | 'warning' }> = {
   pendiente: { label: 'Pendiente', variant: 'warning' },
@@ -43,18 +57,23 @@ function getWeekStart(date: Date): Date {
   return d;
 }
 
-function formatDate(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
+
 
 export default function CitasPage() {
   const [currentWeek, setCurrentWeek] = useState(() => getWeekStart(new Date()));
   const [modalOpen, setModalOpen] = useState(false);
+  const [aceptarModalOpen, setAceptarModalOpen] = useState(false);
+  const [rechazarModalOpen, setRechazarModalOpen] = useState(false);
+  const [urgenciaSeleccionada, setUrgenciaSeleccionada] = useState<UrgenciaPendiente | null>(null);
+
   const { data: citas, isLoading } = useCitas();
   const { data: horarios } = useHorarios();
   const { data: pacientesData } = usePacientes({ page: 1, per_page: 1000 });
+  const { data: urgenciasPendientes, isLoading: loadingUrgencias, isError: hasUrgenciasError } = useUrgenciasPendientes();
   const createMutation = useCreateCita();
   const updateEstadoMutation = useUpdateEstadoCita();
+  const aceptarUrgenciaMutation = useAceptarUrgencia();
+  const rechazarUrgenciaMutation = useRechazarUrgencia();
 
   const weekDays = useMemo(() => {
     return Array.from({ length: 5 }, (_, i) => {
@@ -78,7 +97,6 @@ export default function CitasPage() {
 
   const goToToday = () => setCurrentWeek(getWeekStart(new Date()));
 
-  // Group appointments by day/hour using the enriched fecha/hora fields
   const citasBySlot = useMemo(() => {
     const map: Record<string, Cita[]> = {};
     const citasList = Array.isArray(citas) ? citas : [];
@@ -93,23 +111,47 @@ export default function CitasPage() {
     return map;
   }, [citas]);
 
-  // Available horarios for the select
   const availableHorarios = (horarios ?? []).filter((h) => h.disponible);
 
-  // Form
+  // Form nueva cita
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<CitaSchemaType>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(citaSchema) as any,
     defaultValues: {
       horario_id: 0,
       paciente_id: '',
       motivo: '',
       enlace_videollamada: '',
+    },
+  });
+
+  // Form aceptar urgencia
+  const {
+    register: registerAceptar,
+    handleSubmit: handleSubmitAceptar,
+    reset: resetAceptar,
+    formState: { errors: errorsAceptar },
+  } = useForm<AceptarUrgenciaSchemaType>({
+    resolver: zodResolver(aceptarUrgenciaSchema) as any,
+    defaultValues: {
+      enlace_videollamada: '',
+    },
+  });
+
+  // Form rechazar urgencia
+  const {
+    register: registerRechazar,
+    handleSubmit: handleSubmitRechazar,
+    reset: resetRechazar,
+    formState: { errors: errorsRechazar },
+  } = useForm<RechazarUrgenciaSchemaType>({
+    resolver: zodResolver(rechazarUrgenciaSchema) as any,
+    defaultValues: {
+      motivo_rechazo: '',
     },
   });
 
@@ -125,6 +167,44 @@ export default function CitasPage() {
     [createMutation, reset],
   );
 
+  const onSubmitAceptar = (data: AceptarUrgenciaSchemaType) => {
+    if (!urgenciaSeleccionada) return;
+    aceptarUrgenciaMutation.mutate(
+      { citaId: urgenciaSeleccionada.id, data },
+      {
+        onSuccess: () => {
+          setAceptarModalOpen(false);
+          setUrgenciaSeleccionada(null);
+          resetAceptar();
+        },
+      },
+    );
+  };
+
+  const onSubmitRechazar = (data: RechazarUrgenciaSchemaType) => {
+    if (!urgenciaSeleccionada) return;
+    rechazarUrgenciaMutation.mutate(
+      { citaId: urgenciaSeleccionada.id, data },
+      {
+        onSuccess: () => {
+          setRechazarModalOpen(false);
+          setUrgenciaSeleccionada(null);
+          resetRechazar();
+        },
+      },
+    );
+  };
+
+  const abrirAceptarModal = (urgencia: UrgenciaPendiente) => {
+    setUrgenciaSeleccionada(urgencia);
+    setAceptarModalOpen(true);
+  };
+
+  const abrirRechazarModal = (urgencia: UrgenciaPendiente) => {
+    setUrgenciaSeleccionada(urgencia);
+    setRechazarModalOpen(true);
+  };
+
   const monthLabel = currentWeek.toLocaleDateString('es-MX', {
     month: 'long',
     year: 'numeric',
@@ -133,9 +213,20 @@ export default function CitasPage() {
   return (
     <>
       <Topbar title="Agenda de Citas" subtitle="Vista semanal" />
-      <main className="flex-1 p-6 lg:p-8">
+      <main className="flex-1 p-6 lg:p-8 space-y-6">
+        {/* ─── Panel de Urgencias Pendientes ─── */}
+        <UrgenciasPanel
+          urgencias={urgenciasPendientes}
+          isLoading={loadingUrgencias}
+          hasError={hasUrgenciasError}
+          onAceptar={abrirAceptarModal}
+          onRechazar={abrirRechazarModal}
+          isAceptando={aceptarUrgenciaMutation.isPending}
+          isRechazando={rechazarUrgenciaMutation.isPending}
+        />
+
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={prevWeek}>
               <ChevronLeft size={18} />
@@ -175,9 +266,8 @@ export default function CitasPage() {
                         >
                           <p className="text-xs font-medium text-secondary-400">{DAYS[i]}</p>
                           <p
-                            className={`text-lg font-bold ${
-                              isToday ? 'text-primary' : 'text-gray-900'
-                            }`}
+                            className={`text-lg font-bold ${isToday ? 'text-primary' : 'text-gray-900'
+                              }`}
                           >
                             {day.getDate()}
                           </p>
@@ -220,7 +310,6 @@ export default function CitasPage() {
                                   <Badge variant={badge.variant} className="mt-1">
                                     {badge.label}
                                   </Badge>
-                                  {/* Action buttons on hover */}
                                   {(cita.estado === 'pendiente' || cita.estado === 'confirmada') && (
                                     <div className="hidden group-hover:flex gap-1 mt-1.5">
                                       {cita.estado === 'pendiente' && (
@@ -278,7 +367,6 @@ export default function CitasPage() {
 
         {/* New appointment modal */}
         <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Nueva Cita" size="lg">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
             <Select
               label="Horario Disponible"
@@ -316,6 +404,132 @@ export default function CitasPage() {
               </Button>
               <Button type="submit" isLoading={createMutation.isPending}>
                 Crear Cita
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Modal Aceptar Urgencia */}
+        <Modal
+          isOpen={aceptarModalOpen}
+          onClose={() => {
+            setAceptarModalOpen(false);
+            setUrgenciaSeleccionada(null);
+            resetAceptar();
+          }}
+          title="Aceptar Solicitud de Urgencia"
+          size="md"
+        >
+          <form onSubmit={handleSubmitAceptar(onSubmitAceptar)} className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg text-sm">
+              <p className="font-medium mb-1">Paciente: <span className="font-semibold">{urgenciaSeleccionada?.paciente_nombre}</span></p>
+
+              {urgenciaSeleccionada?.motivo && (
+                <p className="mt-2 text-blue-700 italic">&ldquo;{urgenciaSeleccionada.motivo}&rdquo;</p>
+              )}
+            </div>
+
+
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm p-4 rounded-lg">
+              <p className="font-semibold mb-2">Instrucciones:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Haz clic en el siguiente botón para abrir Google Meet y crear una sala instantánea.</li>
+                <li>Copia el enlace de la sala (ej. <code>https://meet.google.com/abc-defg-hij</code>).</li>
+                <li>Pega el enlace en el campo de abajo y guarda. El paciente recibirá la alerta de inmediato.</li>
+              </ol>
+              <a
+                href="https://meet.google.com/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-block font-medium text-blue-600 hover:text-blue-800 underline"
+              >
+                Abrir meet.google.com/new en nueva pestaña
+              </a>
+            </div>
+
+            <Input
+              label="Enlace de videollamada (Google Meet u otro)"
+              placeholder="https://meet.google.com/abc-defg-hij"
+              error={errorsAceptar.enlace_videollamada?.message}
+              {...registerAceptar('enlace_videollamada')}
+            />
+
+            {aceptarUrgenciaMutation.error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {(aceptarUrgenciaMutation.error as { data?: { detail?: string } })?.data?.detail
+                  ?? 'Error al aceptar la urgencia. Intenta de nuevo.'}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setAceptarModalOpen(false);
+                  setUrgenciaSeleccionada(null);
+                  resetAceptar();
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" isLoading={aceptarUrgenciaMutation.isPending}>
+                <CheckCircle size={16} className="mr-1" />
+                Aceptar y enviar enlace
+              </Button>
+            </div>
+          </form>
+        </Modal>
+
+        {/* Modal Rechazar Urgencia */}
+        <Modal
+          isOpen={rechazarModalOpen}
+          onClose={() => {
+            setRechazarModalOpen(false);
+            setUrgenciaSeleccionada(null);
+            resetRechazar();
+          }}
+          title="Rechazar Solicitud de Urgencia"
+          size="md"
+        >
+          <form onSubmit={handleSubmitRechazar(onSubmitRechazar)} className="space-y-4">
+            <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg text-sm">
+              <p className="font-medium mb-1">Paciente: <span className="font-semibold">{urgenciaSeleccionada?.paciente_nombre}</span></p>
+              {urgenciaSeleccionada?.motivo && (
+                <p className="mt-2 text-red-700 italic">&ldquo;{urgenciaSeleccionada.motivo}&rdquo;</p>
+              )}
+            </div>
+
+            <Textarea
+              label="Motivo del rechazo"
+              placeholder="Explica por qué no se puede atender esta solicitud de urgencia..."
+              error={errorsRechazar.motivo_rechazo?.message}
+              rows={4}
+              {...registerRechazar('motivo_rechazo')}
+            />
+
+            {rechazarUrgenciaMutation.error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                {(rechazarUrgenciaMutation.error as { data?: { detail?: string } })?.data?.detail
+                  ?? 'Error al rechazar la urgencia. Intenta de nuevo.'}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => {
+                  setRechazarModalOpen(false);
+                  setUrgenciaSeleccionada(null);
+                  resetRechazar();
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button variant="danger" type="submit" isLoading={rechazarUrgenciaMutation.isPending}>
+                <XCircle size={16} className="mr-1" />
+                Rechazar solicitud
               </Button>
             </div>
           </form>
