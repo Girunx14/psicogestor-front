@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import TimePicker from '@/components/ui/TimePicker';
 import Badge from '@/components/ui/Badge';
 import EmptyState from '@/components/ui/EmptyState';
 import { useHorarios, useCreateHorario, useDeleteHorario } from '@/hooks/useHorarios';
@@ -31,6 +32,8 @@ export default function HorariosPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<HorarioSchemaType>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,6 +44,8 @@ export default function HorariosPage() {
       tipo: 'presencial',
     },
   });
+
+  const horaValue = watch('hora');
 
   const onSubmit = (data: HorarioSchemaType) => {
     // Calculamos hora_fin como 1 hora después de hora_inicio
@@ -172,9 +177,12 @@ export default function HorariosPage() {
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
             <Input label="Fecha" type="date" error={errors.fecha?.message} {...register('fecha')} />
-            <div className="grid grid-cols-2 gap-4">
-              <Input label="Hora" type="time" error={errors.hora?.message} {...register('hora')} />
-            </div>
+            <TimePicker
+              label="Hora"
+              value={horaValue}
+              onChange={(val) => setValue('hora', val, { shouldValidate: true })}
+              error={errors.hora?.message}
+            />
             <Select
               label="Tipo"
               error={errors.tipo?.message}
