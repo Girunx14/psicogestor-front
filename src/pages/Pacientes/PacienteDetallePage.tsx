@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw, Brain, Video } from 'lucide-react';
+import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw, Brain, Video, Volume2, Square } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -29,6 +29,7 @@ export default function PacienteDetallePage() {
   const generarResumenMutation = useGenerarResumen();
   const [showResumenModal, setShowResumenModal] = useState(false);
   const [showGenograma, setShowGenograma] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const createUrgenciaMutation = useCreateUrgencia();
   const [showUrgenciaModal, setShowUrgenciaModal] = useState(false);
@@ -51,6 +52,39 @@ export default function PacienteDetallePage() {
       onSuccess: () => setShowResumenModal(true),
     });
   };
+
+  const handleSpeak = () => {
+    if (!('speechSynthesis' in window)) return;
+
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    if (!resumen?.contenido_resumen) return;
+
+    const plainText = resumen.contenido_resumen
+      .replace(/[#*`~>-]/g, '')
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+      .replace(/\n/g, '. ');
+
+    const utterance = new SpeechSynthesisUtterance(plainText);
+    utterance.lang = 'es-MX';
+
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  useEffect(() => {
+    if (!showResumenModal && isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  }, [showResumenModal, isSpeaking]);
 
   const parseLocalDate = (dateStr: string) => {
     if (!dateStr) return new Date('');
@@ -354,10 +388,10 @@ export default function PacienteDetallePage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowResumenModal(true)}
-                className="btn-ai-glow inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium"
+                className="btn-ai-glow inline-flex items-center gap-2.5 px-4 py-2 rounded-xl text-xs font-semibold"
               >
-                <Brain size={14} />
-                <span>Resumen IA</span>
+                <Brain size={15} />
+                <span>Resumen Clínico IA</span>
               </button>
             </div>
           </div>
@@ -464,16 +498,16 @@ export default function PacienteDetallePage() {
               <li>Copia el enlace de la sala (ej. <code>https://meet.google.com/abc-defg-hij</code>).</li>
               <li>Pega el enlace en el campo de abajo y guarda. El paciente recibirá la alerta de inmediato.</li>
             </ol>
-            <a 
-              href="https://meet.google.com/new" 
-              target="_blank" 
+            <a
+              href="https://meet.google.com/new"
+              target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-block font-medium text-blue-600 hover:text-blue-800 underline"
             >
               Abrir meet.google.com/new en nueva pestaña
             </a>
           </div>
-          
+
           <Input
             label="Enlace de Google Meet"
             placeholder="https://meet.google.com/..."
@@ -515,112 +549,110 @@ export default function PacienteDetallePage() {
         size="lg"
         variant="ai-header"
       >
-        <div className="space-y-5">
+        <div className="space-y-6">
           {notas.length === 0 ? (
-            <div className="ai-empty-state ai-animate-in">
-              <div className="ai-icon-container">
-                <FileText size={32} className="text-teal-600 relative z-10" />
+            <div className="text-center py-16 ai-animate-in">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-slate-100 flex items-center justify-center">
+                <FileText size={32} className="text-slate-400" />
               </div>
-              <div className="ai-badge mb-4">
-                <Brain size={10} />
-                Sin datos suficientes
-              </div>
-              <h4 className="text-lg font-semibold text-slate-800 mb-2">No hay sesiones registradas</h4>
-              <p className="text-sm text-slate-500 max-w-xs mx-auto leading-relaxed">
-                Registra al menos una nota de evolución para que la inteligencia artificial pueda analizar el historial clínico del paciente.
+              <h4 className="text-lg font-bold text-slate-800 mb-2">Sin datos para analizar</h4>
+              <p className="text-sm text-slate-500 max-w-sm mx-auto leading-relaxed">
+                Registra al menos una nota de evolución para que la IA pueda generar un resumen clínico del paciente.
               </p>
             </div>
           ) : (
             <>
-              <div className="ai-animate-in ai-animate-in-1 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="ai-badge">
-                    <Brain size={10} />
-                    AI Powered
-                  </div>
-                  <span className="text-xs text-slate-500">
-                    {notas.length} sesión{notas.length !== 1 ? 'es' : ''} analizada{notas.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                {resumen?.contenido_resumen && (
-                  <button
-                    onClick={handleGenerarResumen}
-                    disabled={generarResumenMutation.isPending}
-                    className="btn-ai-regenerate inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
-                  >
-                    {generarResumenMutation.isPending ? (
-                      <div className="neural-pulse">
-                        <RefreshCw size={12} className="animate-spin" />
-                      </div>
-                    ) : (
-                      <>
-                        <RefreshCw size={12} />
-                        Regenerar
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-
               {resumen?.contenido_resumen ? (
-                <div className="ai-summary-card ai-animate-in ai-animate-in-2 rounded-xl p-6">
-                  <div className="resumen-markdown text-sm">
-                    <ReactMarkdown>{resumen.contenido_resumen}</ReactMarkdown>
-                  </div>
-                  <div className="mt-5 pt-4 border-t border-slate-200/50 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-teal-500">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
-                      Generado el {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                <div className="ai-animate-in ai-animate-in-1">
+                  {/* Status bar */}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="flex items-center gap-3">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#1a365d] bg-blue-50 border border-blue-100 px-3 py-1 rounded-lg">
+                        <Brain size={12} />
+                        Resumen generado
+                      </span>
+                      <span className="text-[11px] text-slate-400 font-medium">
+                        {notas.length} sesión{notas.length !== 1 ? 'es' : ''} analizada{notas.length !== 1 ? 's' : ''}
+                      </span>
                     </div>
-                    <button
-                      onClick={handleGenerarResumen}
-                      disabled={generarResumenMutation.isPending}
-                      className="inline-flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-700 font-medium transition-colors disabled:opacity-50"
-                    >
-                      {generarResumenMutation.isPending ? (
-                        <>
-                          <div className="neural-pulse">
-                            <RefreshCw size={11} className="animate-spin" />
-                          </div>
-                          Generando...
-                        </>
-                      ) : (
-                        <>
-                          <RefreshCw size={11} />
-                          Regenerar resumen
-                        </>
-                      )}
-                    </button>
+                  </div>
+
+                  {/* Summary content card */}
+                  <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm ai-animate-in ai-animate-in-2">
+                    <div className="p-8 lg:p-10">
+                      <div className="resumen-markdown">
+                        <ReactMarkdown>{resumen.contenido_resumen}</ReactMarkdown>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer actions */}
+                  <div className="mt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ai-animate-in ai-animate-in-3">
+                    <p className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                      <RefreshCw size={11} className={generarResumenMutation.isPending ? "animate-spin text-[#1a365d]" : "text-slate-300"} />
+                      Sincronizado: {new Date(resumen.ultima_actualizacion).toLocaleDateString('es-MX', {
+                        day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                      })}
+                    </p>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleSpeak}
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${isSpeaking
+                          ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                          }`}
+                      >
+                        {isSpeaking ? (
+                          <>
+                            <Square size={13} fill="currentColor" />
+                            Detener
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 size={13} />
+                            Escuchar
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={handleGenerarResumen}
+                        disabled={generarResumenMutation.isPending}
+                        className="btn-ai-premium inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold disabled:opacity-50"
+                      >
+                        {generarResumenMutation.isPending ? (
+                          <>
+                            <RefreshCw size={13} className="animate-spin" />
+                            Regenerando...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw size={13} />
+                            Regenerar
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className="ai-animate-in ai-animate-in-2 text-center py-10">
-                  <div className="ai-icon-container mb-5">
-                    <Brain size={36} className="text-teal-600 relative z-10" />
+                <div className="ai-animate-in ai-animate-in-1 text-center py-14">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-blue-50 to-slate-50 border border-blue-100 flex items-center justify-center">
+                    <Brain size={32} className="text-[#1a365d]" />
                   </div>
-                  <h4 className="text-lg font-semibold text-slate-800 mb-2">Listo para analizar</h4>
-                  <p className="text-sm text-slate-500 max-w-sm mx-auto mb-6 leading-relaxed">
-                    La inteligencia artificial analizará las {notas.length} sesión{notas.length !== 1 ? 'es' : ''} registrada{notas.length !== 1 ? 's' : ''} y generará un resumen clínico integral.
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">Listo para analizar</h4>
+                  <p className="text-sm text-slate-500 max-w-sm mx-auto mb-8 leading-relaxed">
+                    La IA analizará {notas.length} sesión{notas.length !== 1 ? 'es' : ''} y generará un resumen clínico consolidado.
                   </p>
                   <button
                     onClick={handleGenerarResumen}
                     disabled={generarResumenMutation.isPending}
-                    className="btn-ai-generate inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-70"
+                    className="btn-ai-premium inline-flex items-center gap-2.5 px-6 py-3 rounded-xl text-sm font-bold disabled:opacity-60"
                   >
                     {generarResumenMutation.isPending ? (
                       <>
-                        <div className="neural-pulse">
-                          <Sparkles size={16} />
-                        </div>
+                        <RefreshCw size={16} className="animate-spin" />
                         Analizando sesiones...
                       </>
                     ) : (
@@ -634,17 +666,17 @@ export default function PacienteDetallePage() {
               )}
 
               {generarResumenMutation.isPending && resumen?.contenido_resumen && (
-                <div className="ai-animate-in ai-animate-in-3 text-center py-6">
+                <div className="ai-animate-in ai-animate-in-3 text-center py-8">
                   <div className="inline-flex flex-col items-center">
-                    <div className="relative w-16 h-16 mb-4">
-                      <div className="absolute inset-0 rounded-full border-2 border-teal-200"></div>
-                      <div className="absolute inset-0 rounded-full border-2 border-teal-500 border-t-transparent animate-spin"></div>
-                      <div className="absolute inset-3 rounded-full bg-gradient-to-br from-teal-100 to-cyan-100 flex items-center justify-center">
-                        <Brain size={18} className="text-teal-600" />
+                    <div className="relative w-14 h-14 mb-4">
+                      <div className="absolute inset-0 rounded-full border-2 border-slate-200"></div>
+                      <div className="absolute inset-0 rounded-full border-2 border-[#1a365d] border-t-transparent animate-spin"></div>
+                      <div className="absolute inset-2.5 rounded-full bg-blue-50 flex items-center justify-center">
+                        <Brain size={16} className="text-[#1a365d]" />
                       </div>
                     </div>
-                    <p className="text-sm font-medium text-slate-700">Generando nuevo resumen...</p>
-                    <p className="text-xs text-slate-400 mt-1">Analizando patrones y tendencias</p>
+                    <p className="text-sm font-semibold text-slate-700">Regenerando resumen...</p>
+                    <p className="text-xs text-slate-400 mt-1">Analizando patrones clínicos</p>
                   </div>
                 </div>
               )}
