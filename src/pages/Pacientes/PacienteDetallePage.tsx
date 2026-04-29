@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw, Brain } from 'lucide-react';
+import { Calendar, Edit, Plus, FileText, Trash2, User, GraduationCap, MapPin, Users, ClipboardList, Sparkles, GitBranch, RefreshCw, Brain, Video } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import EmptyState from '@/components/ui/EmptyState';
 import Modal from '@/components/ui/Modal';
 import { CardEditorialHeader } from '@/components/ui/Card';
@@ -13,6 +14,7 @@ import { usePaciente, useDeletePaciente } from '@/hooks/usePacientes';
 import { useNotasPaciente } from '@/hooks/useNotas';
 import { useResumenPaciente, useGenerarResumen } from '@/hooks/useResumenes';
 import { useCatalogos } from '@/hooks/useCatalogos';
+import { useCreateUrgencia } from '@/hooks/useCitas';
 
 export default function PacienteDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +29,10 @@ export default function PacienteDetallePage() {
   const generarResumenMutation = useGenerarResumen();
   const [showResumenModal, setShowResumenModal] = useState(false);
   const [showGenograma, setShowGenograma] = useState(false);
+
+  const createUrgenciaMutation = useCreateUrgencia();
+  const [showUrgenciaModal, setShowUrgenciaModal] = useState(false);
+  const [urgenciaEnlace, setUrgenciaEnlace] = useState('');
 
   const { data: catalogos } = useCatalogos();
   const carreras = catalogos?.carreras ?? [];
@@ -148,10 +154,22 @@ export default function PacienteDetallePage() {
           <div className="flex items-center gap-3 mt-6 pt-5 border-t border-[#E5E4E2]">
             <button
               onClick={() => navigate(`/pacientes/${id}/editar`)}
-              className="btn-action btn-action-outline"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
             >
               <Edit size={16} />
-              Editar Datos
+              Editar Paciente
+            </button>
+            <button
+              onClick={() => {
+                setShowGenograma(true);
+                setTimeout(() => {
+                  document.getElementById('genograma-section')?.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+            >
+              <GitBranch size={16} />
+              Genograma
             </button>
             <button
               onClick={() => navigate(`/pacientes/${id}/notas/nueva`)}
@@ -161,8 +179,15 @@ export default function PacienteDetallePage() {
               Nueva Nota
             </button>
             <button
+              onClick={() => setShowUrgenciaModal(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 flex items-center gap-2 transition-colors ml-auto"
+            >
+              <Video size={16} />
+              Llamada de Urgencia
+            </button>
+            <button
               onClick={() => setShowDeleteModal(true)}
-              className="btn-action btn-action-danger-outline ml-auto"
+              className="btn-action btn-action-danger-outline"
             >
               <Trash2 size={16} />
               Eliminar
@@ -395,7 +420,7 @@ export default function PacienteDetallePage() {
         </div>
 
         {/* Genograma */}
-        <div className="genogram-container page-enter page-enter-2">
+        <div id="genograma-section" className="genogram-container page-enter page-enter-2">
           <div className="genogram-header">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(27,57,106,0.08) 0%, rgba(27,57,106,0.04) 100%)', border: '1px solid rgba(27,57,106,0.1)' }}>
@@ -423,6 +448,64 @@ export default function PacienteDetallePage() {
           )}
         </div>
       </main>
+
+      {/* Urgencia modal */}
+      <Modal
+        isOpen={showUrgenciaModal}
+        onClose={() => setShowUrgenciaModal(false)}
+        title="Generar Llamada de Urgencia"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm p-4 rounded-lg">
+            <p className="font-semibold mb-2">Instrucciones:</p>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>Haz clic en el siguiente botón para abrir Google Meet y crear una sala instantánea.</li>
+              <li>Copia el enlace de la sala (ej. <code>https://meet.google.com/abc-defg-hij</code>).</li>
+              <li>Pega el enlace en el campo de abajo y guarda. El paciente recibirá la alerta de inmediato.</li>
+            </ol>
+            <a 
+              href="https://meet.google.com/new" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="mt-3 inline-block font-medium text-blue-600 hover:text-blue-800 underline"
+            >
+              Abrir meet.google.com/new en nueva pestaña
+            </a>
+          </div>
+          
+          <Input
+            label="Enlace de Google Meet"
+            placeholder="https://meet.google.com/..."
+            value={urgenciaEnlace}
+            onChange={(e) => setUrgenciaEnlace(e.target.value)}
+          />
+
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setShowUrgenciaModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                if (!urgenciaEnlace) return;
+                createUrgenciaMutation.mutate(
+                  { paciente_id: pacienteId, enlace_videollamada: urgenciaEnlace },
+                  {
+                    onSuccess: () => {
+                      setShowUrgenciaModal(false);
+                      setUrgenciaEnlace('');
+                    }
+                  }
+                );
+              }}
+              isLoading={createUrgenciaMutation.isPending}
+              disabled={!urgenciaEnlace}
+            >
+              Iniciar Urgencia
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Resumen IA modal */}
       <Modal

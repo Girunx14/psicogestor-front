@@ -169,6 +169,11 @@ export interface CitaCreate {
   enlace_videollamada?: string;
 }
 
+export interface CitaUrgenciaCreate {
+  paciente_id: string;
+  enlace_videollamada: string;
+}
+
 export interface CitaUpdateEstado {
   estado: EstadoCita;
   notas_cancelacion?: string;

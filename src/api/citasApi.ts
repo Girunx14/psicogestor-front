@@ -1,5 +1,5 @@
 import axiosClient from './axiosClient';
-import type { Cita, CitaCreate, CitaUpdateEstado } from '@/types';
+import type { Cita, CitaCreate, CitaUpdateEstado, CitaUrgenciaCreate } from '@/types';
 
 export const citasApi = {
   getAll: async (params: Record<string, unknown> = {}): Promise<Cita[]> => {
@@ -29,6 +29,21 @@ export const citasApi = {
 
   updateEstado: async (id: number, data: CitaUpdateEstado): Promise<Cita> => {
     const response = await axiosClient.patch(`/citas/${id}/estado`, data);
+    return response.data;
+  },
+
+  createUrgencia: async (data: CitaUrgenciaCreate): Promise<Cita> => {
+    const response = await axiosClient.post('/citas/urgencia', data);
+    return response.data;
+  },
+
+  getUrgenciaActiva: async (): Promise<Cita | null> => {
+    const response = await axiosClient.get('/citas/paciente/urgencia-activa');
+    return response.data;
+  },
+
+  solicitarEmergencia: async (): Promise<Cita> => {
+    const response = await axiosClient.post('/citas/paciente/solicitar-urgencia');
     return response.data;
   },
 };

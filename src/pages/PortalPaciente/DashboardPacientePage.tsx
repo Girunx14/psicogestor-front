@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Plus, CalendarClock } from 'lucide-react';
+import { Calendar, Plus, CalendarClock, Video, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,7 +9,7 @@ import Modal from '@/components/ui/Modal';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import EmptyState from '@/components/ui/EmptyState';
-import { useMisCitas, useCreateCitaPaciente } from '@/hooks/useCitas';
+import { useMisCitas, useCreateCitaPaciente, useUrgenciaActiva, useSolicitarEmergencia } from '@/hooks/useCitas';
 import { useHorariosPaciente } from '@/hooks/useHorarios';
 
 const citaSchema = z.object({
@@ -25,6 +25,9 @@ export default function DashboardPacientePage() {
   const { data: misCitas, isLoading: loadingCitas } = useMisCitas();
   const { data: horarios } = useHorariosPaciente();
   const createMutation = useCreateCitaPaciente();
+  const solicitarEmergenciaMutation = useSolicitarEmergencia();
+  const { data: urgenciaActiva } = useUrgenciaActiva();
+  const [emergenciaModalOpen, setEmergenciaModalOpen] = useState(false);
 
   // Form setup
   const {
@@ -66,11 +69,42 @@ export default function DashboardPacientePage() {
           <h1 className="text-2xl font-bold text-gray-900">Bienvenido a tu Portal</h1>
           <p className="text-secondary-500 mt-1">Desde aquí puedes administrar tus citas y solicitar atención clínica.</p>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="w-full sm:w-auto shadow-md">
-          <Plus size={20} className="mr-1" />
-          Agendar Cita
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <Button
+            onClick={() => setEmergenciaModalOpen(true)}
+            className="w-full sm:w-auto shadow-md bg-red-600 hover:bg-red-700 text-white"
+          >
+            <AlertTriangle size={20} className="mr-1" />
+            Solicitar Emergencia
+          </Button>
+          <Button onClick={() => setModalOpen(true)} className="w-full sm:w-auto shadow-md">
+            <Plus size={20} className="mr-1" />
+            Agendar Cita
+          </Button>
+        </div>
       </div>
+
+      {/* Banner de Urgencia */}
+      {urgenciaActiva && urgenciaActiva.enlace_videollamada && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-pulse">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="text-red-500 mt-0.5" size={24} />
+            <div>
+              <h3 className="text-red-800 font-bold text-lg">¡Llamada de urgencia iniciada!</h3>
+              <p className="text-red-700 text-sm">Tu psicólogo te está esperando en la sala de videollamada.</p>
+            </div>
+          </div>
+          <a
+            href={urgenciaActiva.enlace_videollamada}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+          >
+            <Video size={18} />
+            Unirse ahora a la llamada
+          </a>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Upcoming Appointments */}
@@ -204,6 +238,39 @@ export default function DashboardPacientePage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Confirmar Emergencia */}
+      <Modal isOpen={emergenciaModalOpen} onClose={() => setEmergenciaModalOpen(false)} title="Solicitar Atención de Emergencia" size="md">
+        <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg flex items-start gap-3">
+            <AlertTriangle size={24} className="text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-bold mb-1 text-red-900">¿Estás en una situación de crisis?</h3>
+              <p className="text-sm">
+                Al confirmar, se enviará una alerta inmediata a los psicólogos del equipo para solicitar una videollamada de urgencia. Te pedirán que esperes unos momentos en esta pantalla hasta que aparezca el enlace.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button variant="outline" onClick={() => setEmergenciaModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              isLoading={solicitarEmergenciaMutation.isPending}
+              onClick={() => {
+                solicitarEmergenciaMutation.mutate(undefined, {
+                  onSuccess: () => {
+                    setEmergenciaModalOpen(false);
+                  }
+                });
+              }}
+            >
+              Confirmar Solicitud
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

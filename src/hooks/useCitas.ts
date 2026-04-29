@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/api/citasApi';
-import type { CitaCreate, CitaUpdateEstado } from '@/types';
+import type { CitaCreate, CitaUpdateEstado, CitaUrgenciaCreate } from '@/types';
 
 export function useCitas(params: Record<string, unknown> = {}) {
   return useQuery({
@@ -54,6 +54,36 @@ export function useUpdateEstadoCita() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['citas'] });
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
+    },
+  });
+}
+
+export function useCreateUrgencia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CitaUrgenciaCreate) => citasApi.createUrgencia(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      queryClient.invalidateQueries({ queryKey: ['horarios'] });
+    },
+  });
+}
+
+export function useUrgenciaActiva() {
+  return useQuery({
+    queryKey: ['urgencia-activa'],
+    queryFn: () => citasApi.getUrgenciaActiva(),
+    refetchInterval: 15000, // Poll every 15 seconds
+  });
+}
+
+export function useSolicitarEmergencia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => citasApi.solicitarEmergencia(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mis-citas'] });
+      queryClient.invalidateQueries({ queryKey: ['citas'] });
     },
   });
 }

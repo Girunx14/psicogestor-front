@@ -258,7 +258,7 @@ export default function PacienteFormFields({
               {...register('padres_separados')}
             />
           </div>
-          {(watch('padres_separados') === true || watch('padres_separados') === 'true') && (
+          {(watch('padres_separados') === true || String(watch('padres_separados')) === 'true') && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <Input
                 label="¿Cuántos años llevan separados?"

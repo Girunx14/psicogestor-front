@@ -75,17 +75,17 @@ function GenogramaEditor({ pacienteId }: Props) {
 
   // Cargar datos cuando lleguen de la API
   useEffect(() => {
-    if (!genogramaData) return;
-    const { nodes: ns, edges: es } = genogramaData.datos;
+    if (!genogramaData?.datos) return;
+    const { nodes: ns = [], edges: es = [] } = genogramaData.datos;
 
-    const rfNodes: Node[] = ns.map((n) => ({
+    const rfNodes: Node[] = ns.map((n: GenogramaNode, index: number) => ({
       id: n.id,
       type: 'custom',
-      position: n.position,
+      position: n.position || { x: 200 + index * 20, y: 200 + index * 20 },
       data: { ...n, onEdit: openEdit },
     }));
 
-    const rfEdges: Edge[] = es.map((e) => ({
+    const rfEdges: Edge[] = es.map((e: GenogramaEdge) => ({
       id: e.id,
       source: e.source,
       target: e.target,
