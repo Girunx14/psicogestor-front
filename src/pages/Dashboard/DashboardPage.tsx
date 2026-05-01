@@ -3,7 +3,7 @@ import Topbar from '@/components/layout/Topbar';
 import StatCard from '@/components/ui/StatCard';
 import Card from '@/components/ui/Card';
 import { usePacientes } from '@/hooks/usePacientes';
-import { useCitas, useUrgenciasPendientes } from '@/hooks/useCitas';
+import { useCitas, useUrgenciasPendientes, useUpdateEstadoCita } from '@/hooks/useCitas';
 import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,6 +19,14 @@ export default function DashboardPage() {
 
   const navigate = useNavigate();
   const { data: urgenciasPendientes, isLoading: loadingUrgencias, isError: hasUrgenciasError } = useUrgenciasPendientes();
+  const updateEstadoMutation = useUpdateEstadoCita();
+
+  const handleFinalizarUrgencia = (urgencia: any) => {
+    updateEstadoMutation.mutate({
+      id: urgencia.id,
+      data: { estado: 'completada' }
+    });
+  };
 
   const isLoading = loadingPacientes || loadingCitas || loadingUrgencias;
 
@@ -39,8 +47,10 @@ export default function DashboardPage() {
               hasError={hasUrgenciasError}
               onAceptar={() => navigate('/citas')}
               onRechazar={() => navigate('/citas')}
+              onFinalizar={handleFinalizarUrgencia}
               isAceptando={false}
               isRechazando={false}
+              isFinalizando={updateEstadoMutation.isPending}
             />
             {/* Stat cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

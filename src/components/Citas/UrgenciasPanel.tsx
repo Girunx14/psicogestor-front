@@ -10,8 +10,10 @@ interface UrgenciasPanelProps {
   hasError: boolean;
   onAceptar: (urgencia: UrgenciaPendiente) => void;
   onRechazar: (urgencia: UrgenciaPendiente) => void;
+  onFinalizar?: (urgencia: UrgenciaPendiente) => void;
   isAceptando: boolean;
   isRechazando: boolean;
+  isFinalizando?: boolean;
 }
 
 export default function UrgenciasPanel({ 
@@ -20,8 +22,10 @@ export default function UrgenciasPanel({
   hasError, 
   onAceptar, 
   onRechazar, 
+  onFinalizar,
   isAceptando, 
-  isRechazando 
+  isRechazando,
+  isFinalizando
 }: UrgenciasPanelProps) {
   if (isLoading) {
     return (
@@ -62,7 +66,11 @@ export default function UrgenciasPanel({
         {lista.map((urgencia) => (
           <div
             key={urgencia.id}
-            className="card-editorial p-4 border-l-4 border-l-red-400 flex flex-col gap-3 bg-red-50/30 hover:bg-red-50/50 transition-colors"
+            className={`card-editorial p-4 border-l-4 flex flex-col gap-3 transition-colors ${
+              urgencia.estado === 'confirmada' 
+                ? 'border-l-emerald-500 bg-emerald-50/30' 
+                : 'border-l-red-400 bg-red-50/30 hover:bg-red-50/50'
+            }`}
           >
             {/* Header paciente */}
             <div className="flex items-start justify-between gap-2">
@@ -76,44 +84,69 @@ export default function UrgenciasPanel({
                   </p>
                 )}
               </div>
-              <Badge variant="danger" className="shrink-0 shadow-sm">URGENTE</Badge>
+              {urgencia.estado === 'confirmada' ? (
+                <Badge variant="success" className="shrink-0 shadow-sm animate-pulse">EN CURSO</Badge>
+              ) : (
+                <Badge variant="danger" className="shrink-0 shadow-sm">URGENTE</Badge>
+              )}
             </div>
 
             {/* Motivo */}
             {urgencia.motivo && (
-              <blockquote className="mt-1 pl-3 border-l-2 border-red-300 text-xs text-secondary-700 italic">
+              <blockquote className={`mt-1 pl-3 border-l-2 text-xs italic ${
+                urgencia.estado === 'confirmada' ? 'border-emerald-300 text-emerald-800' : 'border-red-300 text-secondary-700'
+              }`}>
                 &ldquo;{urgencia.motivo}&rdquo;
               </blockquote>
             )}
 
             {/* Tiempo */}
-            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-red-600">
+            <div className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold ${
+              urgencia.estado === 'confirmada' ? 'text-emerald-600' : 'text-red-600'
+            }`}>
               <Clock size={12} />
               <span>{tiempoTranscurrido(urgencia.creado_en)}</span>
             </div>
 
             {/* Acciones */}
-            <div className="flex gap-2 pt-2 border-t border-red-100">
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => onAceptar(urgencia)}
-                disabled={isAceptando || isRechazando}
-                className="flex-1 bg-red-600 hover:bg-red-700 border-red-600"
-              >
-                <CheckCircle size={14} className="mr-1" />
-                Atender
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onRechazar(urgencia)}
-                disabled={isAceptando || isRechazando}
-                className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-              >
-                <XCircle size={14} className="mr-1" />
-                Rechazar
-              </Button>
+            <div className={`flex gap-2 pt-2 border-t ${
+              urgencia.estado === 'confirmada' ? 'border-emerald-100' : 'border-red-100'
+            }`}>
+              {urgencia.estado === 'pendiente' ? (
+                <>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => onAceptar(urgencia)}
+                    disabled={isAceptando || isRechazando}
+                    className="flex-1 bg-red-600 hover:bg-red-700 border-red-600"
+                  >
+                    <CheckCircle size={14} className="mr-1" />
+                    Atender
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onRechazar(urgencia)}
+                    disabled={isAceptando || isRechazando}
+                    className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                  >
+                    <XCircle size={14} className="mr-1" />
+                    Rechazar
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => onFinalizar?.(urgencia)}
+                  disabled={isFinalizando}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 border-emerald-600"
+                >
+                  <CheckCircle size={14} className="mr-1" />
+                  Finalizar Sesión
+                </Button>
+              )}
             </div>
           </div>
         ))}

@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { useCitas } from '@/hooks/useCitas';
+import { useCitas, useUrgenciasPendientes, useUpdateEstadoCita } from '@/hooks/useCitas';
 import { usePacientes } from '@/hooks/usePacientes';
 import { useUIStore } from '@/store/uiStore';
-import { Calendar, ChevronRight, User, MoreVertical, LogOut, Menu } from 'lucide-react';
+import { Calendar, ChevronRight, User, MoreVertical, LogOut, Menu, AlertCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
 
 export default function BienvenidaPage() {
   const navigate = useNavigate();
@@ -14,6 +15,15 @@ export default function BienvenidaPage() {
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const { data: citas, isLoading: loadingCitas } = useCitas();
   const { data: pacientesData } = usePacientes({ page: 1, per_page: 1000 });
+  const { data: urgenciasPendientes, isLoading: loadingUrgencias, isError: hasUrgenciasError } = useUrgenciasPendientes();
+  const updateEstadoMutation = useUpdateEstadoCita();
+
+  const handleFinalizarUrgencia = (urgencia: any) => {
+    updateEstadoMutation.mutate({
+      id: urgencia.id,
+      data: { estado: 'completada' }
+    });
+  };
 
   const handleLogout = () => {
     logout();
@@ -135,7 +145,23 @@ export default function BienvenidaPage() {
       </section>
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto p-8 -mt-6">
+      <main className="max-w-5xl mx-auto p-8 -mt-6 space-y-8">
+        
+        {/* Panel de Urgencias (Solo para psicólogos) */}
+        {user?.rol?.nombre !== 'paciente' && (
+          <UrgenciasPanel
+            urgencias={urgenciasPendientes}
+            isLoading={loadingUrgencias}
+            hasError={hasUrgenciasError}
+            onAceptar={() => navigate('/citas')}
+            onRechazar={() => navigate('/citas')}
+            onFinalizar={handleFinalizarUrgencia}
+            isAceptando={false}
+            isRechazando={false}
+            isFinalizando={updateEstadoMutation.isPending}
+          />
+        )}
+
         <div className="bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-gray-100">
           {/* Agenda Header */}
           <div className="px-8 py-6 flex items-center justify-between border-b border-gray-50">
