@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import { Plus, ChevronLeft, ChevronRight, Video, MapPin, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, ChevronLeft, ChevronRight, Video, MapPin, CheckCircle, XCircle, FileText } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -15,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
-import { tiempoTranscurrido, formatDate } from '@/lib/utils';
+import { formatDate } from '@/lib/utils';
 
 const citaSchema = z.object({
   horario_id: z.coerce.number().min(1, 'Selecciona un horario'),
@@ -65,6 +66,7 @@ export default function CitasPage() {
   const [aceptarModalOpen, setAceptarModalOpen] = useState(false);
   const [rechazarModalOpen, setRechazarModalOpen] = useState(false);
   const [urgenciaSeleccionada, setUrgenciaSeleccionada] = useState<UrgenciaPendiente | null>(null);
+  const navigate = useNavigate();
 
   const { data: citas, isLoading } = useCitas();
   const { data: horarios } = useHorarios();
@@ -422,7 +424,21 @@ export default function CitasPage() {
         >
           <form onSubmit={handleSubmitAceptar(onSubmitAceptar)} className="space-y-4">
             <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg text-sm">
-              <p className="font-medium mb-1">Paciente: <span className="font-semibold">{urgenciaSeleccionada?.paciente_nombre}</span></p>
+              <div className="flex items-center justify-between">
+                <p className="font-medium">
+                  Paciente: <span className="font-semibold">{urgenciaSeleccionada?.paciente_nombre}</span>
+                </p>
+                {urgenciaSeleccionada?.paciente_id && (
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/pacientes/${urgenciaSeleccionada.paciente_id}`)}
+                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm"
+                  >
+                    <FileText size={16} />
+                    Ver Expediente
+                  </button>
+                )}
+              </div>
 
               {urgenciaSeleccionada?.motivo && (
                 <p className="mt-2 text-blue-700 italic">&ldquo;{urgenciaSeleccionada.motivo}&rdquo;</p>

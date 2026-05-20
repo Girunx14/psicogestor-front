@@ -282,6 +282,7 @@ export interface UrgenciaPendiente {
   estado: 'pendiente' | 'confirmada' | 'cancelada';
   motivo: string | null;
   creado_en: string;
+  paciente_id: string;
   paciente_nombre: string;
   paciente_numero_control: string | null;
 }

@@ -1,12 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { useCitas, useUrgenciasPendientes, useUpdateEstadoCita } from '@/hooks/useCitas';
+import { useCitas, useUrgenciasPendientes, useUpdateEstadoCita, useAceptarUrgencia } from '@/hooks/useCitas';
 import { usePacientes } from '@/hooks/usePacientes';
 import { useUIStore } from '@/store/uiStore';
-import { Calendar, ChevronRight, User, MoreVertical, LogOut, Menu, AlertCircle } from 'lucide-react';
+import { Calendar, ChevronRight, User, MoreVertical, LogOut, Menu, FileText } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
+import VideoCallOverlay from '@/components/Citas/VideoCallOverlay';
+import type { UrgenciaPendiente } from '@/types';
 
 export default function BienvenidaPage() {
   const navigate = useNavigate();
@@ -17,12 +21,43 @@ export default function BienvenidaPage() {
   const { data: pacientesData } = usePacientes({ page: 1, per_page: 1000 });
   const { data: urgenciasPendientes, isLoading: loadingUrgencias, isError: hasUrgenciasError } = useUrgenciasPendientes();
   const updateEstadoMutation = useUpdateEstadoCita();
+  const aceptarUrgenciaMutation = useAceptarUrgencia();
+
+  const [enlaceModalOpen, setEnlaceModalOpen] = useState(false);
+  const [urgenciaSeleccionada, setUrgenciaSeleccionada] = useState<UrgenciaPendiente | null>(null);
+  const [enlaceInput, setEnlaceInput] = useState('');
+  const [activeCall, setActiveCall] = useState<{ id: number; meetUrl: string; patientName: string } | null>(null);
+
+  const handleAceptarUrgencia = (urgencia: UrgenciaPendiente) => {
+    setUrgenciaSeleccionada(urgencia);
+    setEnlaceInput('');
+    setEnlaceModalOpen(true);
+  };
+
+  const handleSubmitEnlace = () => {
+    if (!urgenciaSeleccionada || !enlaceInput.trim()) return;
+    aceptarUrgenciaMutation.mutate(
+      { citaId: urgenciaSeleccionada.id, data: { enlace_videollamada: enlaceInput.trim() } },
+      {
+        onSuccess: (data) => {
+          setActiveCall({
+            id: urgenciaSeleccionada.id,
+            meetUrl: data.enlace_videollamada || '',
+            patientName: urgenciaSeleccionada.paciente_nombre,
+          });
+          setEnlaceModalOpen(false);
+          setUrgenciaSeleccionada(null);
+        },
+      },
+    );
+  };
 
   const handleFinalizarUrgencia = (urgencia: any) => {
     updateEstadoMutation.mutate({
       id: urgencia.id,
       data: { estado: 'completada' }
     });
+    setActiveCall(null);
   };
 
   const handleLogout = () => {
@@ -153,10 +188,10 @@ export default function BienvenidaPage() {
             urgencias={urgenciasPendientes}
             isLoading={loadingUrgencias}
             hasError={hasUrgenciasError}
-            onAceptar={() => navigate('/citas')}
+            onAceptar={handleAceptarUrgencia}
             onRechazar={() => navigate('/citas')}
             onFinalizar={handleFinalizarUrgencia}
-            isAceptando={false}
+            isAceptando={aceptarUrgenciaMutation.isPending}
             isRechazando={false}
             isFinalizando={updateEstadoMutation.isPending}
           />
@@ -278,7 +313,98 @@ export default function BienvenidaPage() {
           </div>
         </div>
 
-        {/* Bottom Navigation Cards (Alternative to just the agenda) */}
+        {/* Modal Enlace de Videollamada */}
+        <Modal
+          isOpen={enlaceModalOpen}
+          onClose={() => {
+            setEnlaceModalOpen(false);
+            setUrgenciaSeleccionada(null);
+            setEnlaceInput('');
+          }}
+          title="Videollamada de Urgencia"
+          size="md"
+        >
+          <div className="space-y-4">
+            {urgenciaSeleccionada && (
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-center">
+                <div className="mb-2">
+                  <span className="font-medium text-slate-500">Paciente:</span>{' '}
+                  <span className="text-slate-900 font-bold text-lg">{urgenciaSeleccionada.paciente_nombre}</span>
+                  <button
+                    onClick={() => navigate(`/pacientes/${urgenciaSeleccionada.paciente_id}`)}
+                    className="ml-2 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm"
+                  >
+                    <FileText size={16} />
+                    Ver Expediente
+                  </button>
+                </div>
+                {urgenciaSeleccionada.motivo && (
+                  <div className="border-t border-slate-200 pt-2 mt-2">
+                    <span className="font-medium text-slate-500">Motivo:</span>{' '}
+                    <span className="text-slate-700 italic">"{urgenciaSeleccionada.motivo}"</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+              <p className="font-medium mb-3">Instrucciones:</p>
+              <ol className="list-decimal list-inside space-y-2 ml-2">
+                <li>
+                  <a
+                    href="https://meet.google.com/new"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 hover:underline font-medium"
+                  >
+                    Abre meet.google.com/new
+                  </a>{' '}
+                  en una nueva pestaña
+                </li>
+                <li>Copia el enlace de la sala creada (ej. https://meet.google.com/abc-defg-hij)</li>
+                <li>Pégalo en el campo de abajo</li>
+                <li>Da click en "Iniciar Llamada"</li>
+              </ol>
+            </div>
+            <Input
+              label="Enlace de Google Meet"
+              placeholder="https://meet.google.com/abc-defg-hij"
+              value={enlaceInput}
+              onChange={(e) => setEnlaceInput(e.target.value)}
+              autoFocus
+            />
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEnlaceModalOpen(false);
+                  setUrgenciaSeleccionada(null);
+                  setEnlaceInput('');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSubmitEnlace}
+                isLoading={aceptarUrgenciaMutation.isPending}
+                disabled={!enlaceInput.trim()}
+              >
+                Iniciar Llamada
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Overlay de Videollamada */}
+        {activeCall && (
+          <VideoCallOverlay
+            meetUrl={activeCall.meetUrl}
+            displayName={user?.username ? `Psic. ${user.username}` : 'Psicólogo'}
+            onClose={() => setActiveCall(null)}
+            onFinalizar={() => handleFinalizarUrgencia({ id: activeCall.id })}
+          />
+        )}
+
+        {/* Bottom Navigation Cards */}
         {user?.rol?.nombre !== 'desarrollo_academico' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
             <button
@@ -319,25 +445,18 @@ export default function BienvenidaPage() {
 
       {/* Footer */}
       <footer className="bg-white text-gray-600 py-8 px-4 border-t border-gray-100">
-        {/* Contenedor principal: Usamos flex y col-center para asegurar el centrado total */}
         <div className="max-w-7xl mx-auto flex flex-col items-center justify-center text-center">
-
-          {/* Sección: Marca y Bio */}
           <div className="space-y-2">
             <h2 className="text-gray-900 text-2xl font-bold">PsicoGestor</h2>
             <p className="text-sm max-w-xs mx-auto leading-relaxed text-gray-500">
               Gestión de citas y pacientes para psicólogos.
             </p>
           </div>
-
-          {/* Línea inferior de copyright */}
           <div className="border-t border-gray-100 w-full max-w-xs mt-6 pt-4 text-xs text-gray-400">
             &copy; 2026 PsicpoGestor. Por Gerardo Segura Navarro y Marcos Cardenas Magaña
           </div>
         </div>
       </footer>
-
-
     </div>
   );
 }

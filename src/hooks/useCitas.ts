@@ -46,9 +46,10 @@ export function useCreateCitaPaciente() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CitaCreate) => citasApi.createAsPaciente(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mis-citas'] });
+onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['citas'] });
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
+      queryClient.invalidateQueries({ queryKey: ['urgencias-pendientes'] });
     },
   });
 }

@@ -1,11 +1,18 @@
-import { Users, Calendar, ClipboardList, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Users, Calendar, ClipboardList, Clock, FileText } from 'lucide-react';
 import Topbar from '@/components/layout/Topbar';
 import StatCard from '@/components/ui/StatCard';
 import Card from '@/components/ui/Card';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
+import VideoCallOverlay from '@/components/Citas/VideoCallOverlay';
 import { usePacientes } from '@/hooks/usePacientes';
-import { useCitas, useUrgenciasPendientes, useUpdateEstadoCita } from '@/hooks/useCitas';
+import { useCitas, useUrgenciasPendientes, useUpdateEstadoCita, useAceptarUrgencia } from '@/hooks/useCitas';
 import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/store/authStore';
+import type { UrgenciaPendiente } from '@/types';
 
 export default function DashboardPage() {
   const { data: pacientesData, isLoading: loadingPacientes } = usePacientes({ page: 1, per_page: 1 });
@@ -18,14 +25,46 @@ export default function DashboardPage() {
   const citasCompletadas = citasList.filter((c) => c.estado === 'completada').length;
 
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const { data: urgenciasPendientes, isLoading: loadingUrgencias, isError: hasUrgenciasError } = useUrgenciasPendientes();
   const updateEstadoMutation = useUpdateEstadoCita();
+  const aceptarUrgenciaMutation = useAceptarUrgencia();
+
+  const [enlaceModalOpen, setEnlaceModalOpen] = useState(false);
+  const [urgenciaSeleccionada, setUrgenciaSeleccionada] = useState<UrgenciaPendiente | null>(null);
+  const [enlaceInput, setEnlaceInput] = useState('');
+  const [activeCall, setActiveCall] = useState<{ id: number; meetUrl: string; patientName: string } | null>(null);
+
+  const handleAceptarUrgencia = (urgencia: UrgenciaPendiente) => {
+    setUrgenciaSeleccionada(urgencia);
+    setEnlaceInput('');
+    setEnlaceModalOpen(true);
+  };
+
+  const handleSubmitEnlace = () => {
+    if (!urgenciaSeleccionada || !enlaceInput.trim()) return;
+    aceptarUrgenciaMutation.mutate(
+      { citaId: urgenciaSeleccionada.id, data: { enlace_videollamada: enlaceInput.trim() } },
+      {
+        onSuccess: (data) => {
+          setActiveCall({
+            id: urgenciaSeleccionada.id,
+            meetUrl: data.enlace_videollamada || '',
+            patientName: urgenciaSeleccionada.paciente_nombre,
+          });
+          setEnlaceModalOpen(false);
+          setUrgenciaSeleccionada(null);
+        },
+      },
+    );
+  };
 
   const handleFinalizarUrgencia = (urgencia: any) => {
     updateEstadoMutation.mutate({
       id: urgencia.id,
       data: { estado: 'completada' }
     });
+    setActiveCall(null);
   };
 
   const isLoading = loadingPacientes || loadingCitas || loadingUrgencias;
@@ -45,10 +84,10 @@ export default function DashboardPage() {
               urgencias={urgenciasPendientes}
               isLoading={loadingUrgencias}
               hasError={hasUrgenciasError}
-              onAceptar={() => navigate('/citas')}
+              onAceptar={handleAceptarUrgencia}
               onRechazar={() => navigate('/citas')}
               onFinalizar={handleFinalizarUrgencia}
-              isAceptando={false}
+              isAceptando={aceptarUrgenciaMutation.isPending}
               isRechazando={false}
               isFinalizando={updateEstadoMutation.isPending}
             />
@@ -113,6 +152,96 @@ export default function DashboardPage() {
                 </div>
               )}
             </Card>
+            {/* Modal Enlace de Videollamada */}
+            <Modal
+              isOpen={enlaceModalOpen}
+              onClose={() => {
+                setEnlaceModalOpen(false);
+                setUrgenciaSeleccionada(null);
+                setEnlaceInput('');
+              }}
+              title="Videollamada de Urgencia"
+              size="md"
+            >
+              <div className="space-y-4">
+                {urgenciaSeleccionada && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-center">
+                    <div className="mb-2">
+                      <span className="font-medium text-slate-500">Paciente:</span>{' '}
+                      <span className="text-slate-900 font-bold text-lg">{urgenciaSeleccionada.paciente_nombre}</span>
+                      <button
+                        onClick={() => navigate(`/pacientes/${urgenciaSeleccionada.paciente_id}`)}
+                        className="ml-2 inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-sm"
+                      >
+                        <FileText size={16} />
+                        Ver Expediente
+                      </button>
+                    </div>
+                    {urgenciaSeleccionada.motivo && (
+                      <div className="border-t border-slate-200 pt-2 mt-2">
+                        <span className="font-medium text-slate-500">Motivo:</span>{' '}
+                        <span className="text-slate-700 italic">"{urgenciaSeleccionada.motivo}"</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                  <p className="font-medium mb-3">Instrucciones:</p>
+                  <ol className="list-decimal list-inside space-y-2 ml-2">
+                    <li>
+                      <a
+                        href="https://meet.google.com/new"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:underline font-medium"
+                      >
+                        Abre meet.google.com/new
+                      </a>{' '}
+                      en una nueva pestaña
+                    </li>
+                    <li>Copia el enlace de la sala creada (ej. https://meet.google.com/abc-defg-hij)</li>
+                    <li>Pégalo en el campo de abajo</li>
+                    <li>Da click en "Iniciar Llamada"</li>
+                  </ol>
+                </div>
+                <Input
+                  label="Enlace de Google Meet"
+                  placeholder="https://meet.google.com/abc-defg-hij"
+                  value={enlaceInput}
+                  onChange={(e) => setEnlaceInput(e.target.value)}
+                  autoFocus
+                />
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEnlaceModalOpen(false);
+                      setUrgenciaSeleccionada(null);
+                      setEnlaceInput('');
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleSubmitEnlace}
+                    isLoading={aceptarUrgenciaMutation.isPending}
+                    disabled={!enlaceInput.trim()}
+                  >
+                    Iniciar Llamada
+                  </Button>
+                </div>
+              </div>
+            </Modal>
+
+            {/* Overlay de Videollamada */}
+            {activeCall && (
+              <VideoCallOverlay
+                meetUrl={activeCall.meetUrl}
+                displayName={user?.username ? `Psic. ${user.username}` : 'Psicólogo'}
+                onClose={() => setActiveCall(null)}
+                onFinalizar={() => handleFinalizarUrgencia({ id: activeCall.id })}
+              />
+            )}
           </>
         )}
       </main>
