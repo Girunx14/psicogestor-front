@@ -31,7 +31,7 @@ export default function PatientLayout() {
             
             <div className="flex items-center gap-4">
               <div className="text-sm font-medium text-gray-700 hidden sm:block">
-                Hola, {user.username}
+                Hola, {user.nombre || user.username}
               </div>
               <button
                 onClick={handleLogout}

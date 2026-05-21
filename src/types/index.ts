@@ -12,6 +12,7 @@ export interface Rol {
 export interface User {
   id: number;
   username: string;
+  nombre?: string | null;
   rol_id: number;
   creado_en: string; // ISO datetime
   rol: Rol;
@@ -219,12 +220,14 @@ export interface NotaEvolucionUpdate {
 
 export interface UsuarioCreate {
   username: string;
+  nombre: string;
   password: string;
   rol_id: number;
 }
 
 export interface UsuarioUpdate {
   username?: string;
+  nombre?: string;
   password?: string;
   rol_id?: number;
 }

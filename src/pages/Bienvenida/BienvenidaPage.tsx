@@ -122,7 +122,7 @@ export default function BienvenidaPage() {
         <div className="flex items-center gap-3 text-right">
           <div>
             <p className="text-sm font-bold text-[#1B396A]">
-              {user?.username}
+              {user?.nombre || user?.username}
             </p>
             <p className="text-xs text-gray-500 capitalize">
               {user?.rol?.nombre || 'Psicólogo Clínico'}
@@ -398,7 +398,7 @@ export default function BienvenidaPage() {
         {activeCall && (
           <VideoCallOverlay
             meetUrl={activeCall.meetUrl}
-            displayName={user?.username ? `Psic. ${user.username}` : 'Psicólogo'}
+            displayName={user?.nombre || (user?.username ? `Psic. ${user.username}` : 'Psicólogo')}
             onClose={() => setActiveCall(null)}
             onFinalizar={() => handleFinalizarUrgencia({ id: activeCall.id })}
           />

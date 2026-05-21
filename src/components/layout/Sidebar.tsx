@@ -94,7 +94,7 @@ export default function Sidebar() {
         <div className="px-3 py-4 border-t border-secondary-100">
           {user && (
             <div className="px-3 mb-3">
-              <p className="text-xs font-medium text-gray-900">{user.username}</p>
+              <p className="text-xs font-medium text-gray-900">{user.nombre || user.username}</p>
               <p className="text-[11px] text-secondary-400 capitalize">{user.rol?.nombre}</p>
             </div>
           )}

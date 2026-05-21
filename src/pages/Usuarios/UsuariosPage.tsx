@@ -14,6 +14,7 @@ import { useUsuarios, useCreateUsuario } from '@/hooks/useUsuarios';
 import type { User } from '@/types';
 
 const createSchema = z.object({
+  nombre: z.string().min(3, 'Mínimo 3 caracteres'),
   username: z.string().min(3, 'Mínimo 3 caracteres'),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
   rol_id: z.coerce.number().min(1, 'Selecciona un rol'),
@@ -35,7 +36,7 @@ export default function UsuariosPage() {
   } = useForm<CreateSchemaType>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(createSchema) as any,
-    defaultValues: { username: '', password: '', rol_id: 2 },
+    defaultValues: { nombre: '', username: '', password: '', rol_id: 2 },
   });
 
   const onSubmit = (formData: CreateSchemaType) => {
@@ -52,6 +53,11 @@ export default function UsuariosPage() {
       key: 'id',
       header: 'ID',
       render: (u: User) => <span className="font-medium text-gray-900">{u.id}</span>,
+    },
+    {
+      key: 'nombre',
+      header: 'Nombre',
+      render: (u: User) => <span className="font-medium text-gray-900">{u.nombre || '—'}</span>,
     },
     {
       key: 'username',
@@ -124,6 +130,7 @@ export default function UsuariosPage() {
         <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Nuevo Usuario" size="md">
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-4">
+            <Input label="Nombre completo / Título" error={errors.nombre?.message} {...register('nombre')} />
             <Input label="Usuario" error={errors.username?.message} {...register('username')} />
             <Input label="Contraseña" type="password" error={errors.password?.message} {...register('password')} />
             <Select

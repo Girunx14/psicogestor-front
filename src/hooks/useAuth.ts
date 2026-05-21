@@ -36,6 +36,7 @@ export function useLogin() {
         user = {
           id: userId,
           username: payloadDecoded.username,
+          nombre: payloadDecoded.nombre,
           rol_id: rolId,
           creado_en: new Date().toISOString(),
           rol: {
@@ -73,6 +74,7 @@ export function useLoginPaciente() {
       const user: User = {
         id: userId,
         username: payloadDecoded.username,
+        nombre: payloadDecoded.nombre,
         rol_id: 3, // Assuming 3 is Paciente
         creado_en: new Date().toISOString(),
         rol: {

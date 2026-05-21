@@ -42,7 +42,7 @@ export default function Topbar({ title, subtitle }: TopbarProps) {
                 <User size={16} className="text-primary" />
               </div>
               <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                {user.username}
+                {user.nombre || user.username}
               </span>
             </div>
           )}

@@ -237,7 +237,7 @@ export default function DashboardPage() {
             {activeCall && (
               <VideoCallOverlay
                 meetUrl={activeCall.meetUrl}
-                displayName={user?.username ? `Psic. ${user.username}` : 'Psicólogo'}
+                displayName={user?.nombre || (user?.username ? `Psic. ${user.username}` : 'Psicólogo')}
                 onClose={() => setActiveCall(null)}
                 onFinalizar={() => handleFinalizarUrgencia({ id: activeCall.id })}
               />
