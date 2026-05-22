@@ -37,3 +37,13 @@ export function useUpdateUsuario(id: number) {
     },
   });
 }
+
+export function useDeleteUsuario() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => usuariosApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+    },
+  });
+}

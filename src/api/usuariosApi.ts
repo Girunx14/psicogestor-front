@@ -21,4 +21,8 @@ export const usuariosApi = {
     const response = await axiosClient.patch(`/usuarios/${id}`, data);
     return response.data;
   },
+
+  delete: async (id: number): Promise<void> => {
+    await axiosClient.delete(`/usuarios/${id}`);
+  },
 };

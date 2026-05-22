@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Shield } from 'lucide-react';
+import { Plus, Shield, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,7 +10,8 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Badge from '@/components/ui/Badge';
-import { useUsuarios, useCreateUsuario } from '@/hooks/useUsuarios';
+import { useUsuarios, useCreateUsuario, useDeleteUsuario } from '@/hooks/useUsuarios';
+import { useAuthStore } from '@/store/authStore';
 import type { User } from '@/types';
 
 const createSchema = z.object({
@@ -24,9 +25,13 @@ type CreateSchemaType = z.infer<typeof createSchema>;
 
 export default function UsuariosPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [deleteUser, setDeleteUser] = useState<User | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const { data, isLoading } = useUsuarios({ page, per_page: 20 });
   const createMutation = useCreateUsuario();
+  const deleteMutation = useDeleteUsuario();
+  const currentUser = useAuthStore((s) => s.user);
 
   const {
     register,
@@ -44,6 +49,19 @@ export default function UsuariosPage() {
       onSuccess: () => {
         setModalOpen(false);
         reset();
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!deleteUser) return;
+    deleteMutation.mutate(deleteUser.id, {
+      onSuccess: () => {
+        setDeleteUser(null);
+        setDeleteError(null);
+      },
+      onError: (err: any) => {
+        setDeleteError(err.response?.data?.detail || 'Ocurrió un error al eliminar el usuario');
       },
     });
   };
@@ -82,6 +100,29 @@ export default function UsuariosPage() {
           month: 'short',
           year: 'numeric',
         }),
+    },
+    {
+      key: 'acciones',
+      header: 'Acciones',
+      render: (u: User) => {
+        const isSelf = currentUser?.id === u.id;
+        return (
+          <div className="flex items-center gap-2">
+            {!isSelf && (
+              <button
+                onClick={() => {
+                  setDeleteUser(u);
+                  setDeleteError(null);
+                }}
+                className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                title="Eliminar usuario"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -153,6 +194,48 @@ export default function UsuariosPage() {
               </Button>
             </div>
           </form>
+        </Modal>
+
+        {/* Delete confirmation modal */}
+        <Modal
+          isOpen={!!deleteUser}
+          onClose={() => setDeleteUser(null)}
+          title="Confirmar Eliminación"
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-secondary-600">
+              ¿Estás seguro de que deseas eliminar al usuario{' '}
+              <span className="font-semibold text-gray-900">
+                {deleteUser?.nombre || deleteUser?.username}
+              </span>
+              ? Esta acción no se puede deshacer.
+            </p>
+
+            {deleteError && (
+              <div className="p-3 bg-red-50 text-red-800 text-xs rounded-lg border border-red-200">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setDeleteUser(null)}
+                disabled={deleteMutation.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleDelete}
+                isLoading={deleteMutation.isPending}
+              >
+                Eliminar
+              </Button>
+            </div>
+          </div>
         </Modal>
       </main>
     </>
