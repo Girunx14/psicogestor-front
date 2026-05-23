@@ -86,7 +86,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', c
             <button
               onClick={onClose}
               className={clsx(
-                'p-1 rounded-lg transition-colors',
+                'relative z-10 p-1 rounded-lg transition-colors',
                 variant === 'ai-header'
                   ? 'text-slate-400 hover:text-white hover:bg-white/10'
                   : 'text-secondary-400 hover:text-secondary-600 hover:bg-secondary-100'

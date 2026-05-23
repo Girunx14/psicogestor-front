@@ -9,7 +9,6 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
-import VideoCallOverlay from '@/components/Citas/VideoCallOverlay';
 import type { UrgenciaPendiente } from '@/types';
 
 export default function BienvenidaPage() {
@@ -26,7 +25,6 @@ export default function BienvenidaPage() {
   const [enlaceModalOpen, setEnlaceModalOpen] = useState(false);
   const [urgenciaSeleccionada, setUrgenciaSeleccionada] = useState<UrgenciaPendiente | null>(null);
   const [enlaceInput, setEnlaceInput] = useState('');
-  const [activeCall, setActiveCall] = useState<{ id: number; meetUrl: string; patientName: string } | null>(null);
 
   const handleAceptarUrgencia = (urgencia: UrgenciaPendiente) => {
     setUrgenciaSeleccionada(urgencia);
@@ -40,11 +38,9 @@ export default function BienvenidaPage() {
       { citaId: urgenciaSeleccionada.id, data: { enlace_videollamada: enlaceInput.trim() } },
       {
         onSuccess: (data) => {
-          setActiveCall({
-            id: urgenciaSeleccionada.id,
-            meetUrl: data.enlace_videollamada || '',
-            patientName: urgenciaSeleccionada.paciente_nombre,
-          });
+          if (data.enlace_videollamada) {
+            window.open(data.enlace_videollamada, '_blank');
+          }
           setEnlaceModalOpen(false);
           setUrgenciaSeleccionada(null);
         },
@@ -57,7 +53,6 @@ export default function BienvenidaPage() {
       id: urgencia.id,
       data: { estado: 'completada' }
     });
-    setActiveCall(null);
   };
 
   const handleLogout = () => {
@@ -393,16 +388,6 @@ export default function BienvenidaPage() {
             </div>
           </div>
         </Modal>
-
-        {/* Overlay de Videollamada */}
-        {activeCall && (
-          <VideoCallOverlay
-            meetUrl={activeCall.meetUrl}
-            displayName={user?.nombre || (user?.username ? `Psic. ${user.username}` : 'Psicólogo')}
-            onClose={() => setActiveCall(null)}
-            onFinalizar={() => handleFinalizarUrgencia({ id: activeCall.id })}
-          />
-        )}
 
         {/* Bottom Navigation Cards */}
         {user?.rol?.nombre !== 'desarrollo_academico' && (

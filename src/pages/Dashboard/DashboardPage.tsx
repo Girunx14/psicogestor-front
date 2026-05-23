@@ -6,7 +6,6 @@ import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import VideoCallOverlay from '@/components/Citas/VideoCallOverlay';
 import { usePacientes } from '@/hooks/usePacientes';
 import { useCitas, useUrgenciasPendientes, useUpdateEstadoCita, useAceptarUrgencia } from '@/hooks/useCitas';
 import UrgenciasPanel from '@/components/Citas/UrgenciasPanel';
@@ -33,7 +32,6 @@ export default function DashboardPage() {
   const [enlaceModalOpen, setEnlaceModalOpen] = useState(false);
   const [urgenciaSeleccionada, setUrgenciaSeleccionada] = useState<UrgenciaPendiente | null>(null);
   const [enlaceInput, setEnlaceInput] = useState('');
-  const [activeCall, setActiveCall] = useState<{ id: number; meetUrl: string; patientName: string } | null>(null);
 
   const handleAceptarUrgencia = (urgencia: UrgenciaPendiente) => {
     setUrgenciaSeleccionada(urgencia);
@@ -47,11 +45,9 @@ export default function DashboardPage() {
       { citaId: urgenciaSeleccionada.id, data: { enlace_videollamada: enlaceInput.trim() } },
       {
         onSuccess: (data) => {
-          setActiveCall({
-            id: urgenciaSeleccionada.id,
-            meetUrl: data.enlace_videollamada || '',
-            patientName: urgenciaSeleccionada.paciente_nombre,
-          });
+          if (data.enlace_videollamada) {
+            window.open(data.enlace_videollamada, '_blank');
+          }
           setEnlaceModalOpen(false);
           setUrgenciaSeleccionada(null);
         },
@@ -64,7 +60,6 @@ export default function DashboardPage() {
       id: urgencia.id,
       data: { estado: 'completada' }
     });
-    setActiveCall(null);
   };
 
   const isLoading = loadingPacientes || loadingCitas || loadingUrgencias;
@@ -233,15 +228,7 @@ export default function DashboardPage() {
               </div>
             </Modal>
 
-            {/* Overlay de Videollamada */}
-            {activeCall && (
-              <VideoCallOverlay
-                meetUrl={activeCall.meetUrl}
-                displayName={user?.nombre || (user?.username ? `Psic. ${user.username}` : 'Psicólogo')}
-                onClose={() => setActiveCall(null)}
-                onFinalizar={() => handleFinalizarUrgencia({ id: activeCall.id })}
-              />
-            )}
+            </Modal>
           </>
         )}
       </main>
